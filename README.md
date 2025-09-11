@@ -1,5 +1,10 @@
 # Plotter Lab – Generative Layers for Pen Plotters
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+
 A modern, dark-themed web app for creating multi-layer generative SVG artwork and exporting clean per-layer SVGs and GRBL-compatible G-code for plotters.
 
 - Frontend: React + Vite + Tailwind
@@ -7,6 +12,34 @@ A modern, dark-themed web app for creating multi-layer generative SVG artwork an
 - Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands
 - Exports: ZIP of per-layer SVGs; G-code export modes (single combined file, per-layer ZIP, per-color ZIP)
 - Docker: Multi-stage image for easy hosting on Ubuntu
+
+## Table of Contents
+
+- [Quick Start (Local Dev)](#quick-start-local-dev)
+- [Build and Run (Production, without Docker)](#build-and-run-production-without-docker)
+- [Docker](#docker)
+- [Performance & Architecture](#performance--architecture)
+- [Plotter Settings](#plotter-settings)
+- [File Units](#file-units)
+- [Project Structure](#project-structure)
+- [UI Hints](#ui-hints)
+- [Adding New Generators](#adding-new-generators)
+- [Features Overview](#-features-overview)
+- [Quick Start (Docker Compose)](#-quick-start-docker-compose)
+- [Examples Library](#-examples-library)
+- [UI Primer](#-ui-primer)
+- [Generators Guide](#-generators-guide)
+- [On‑Canvas Picker (Clip to Polygon)](#-oncanvas-picker-clip-to-polygon)
+- [On‑Canvas Transform (SVG Import)](#-oncanvas-transform-svg-import)
+- [Keyboard & Mouse](#-keyboard--mouse)
+- [Design Recipes](#-design-recipes-starter-settings)
+- [Exports](#-exports)
+- [Photo → Halftone (Mono / CMYK)](#-photo--halftone-mono--cmyk)
+- [Tips & Troubleshooting](#-tips--troubleshooting)
+- [Contributing](#contributing)
+- [Development](#-development)
+- [Roadmap](#-roadmap-shortterm)
+- [License](#-license)
 
 ## Quick Start (Local Dev)
 
@@ -45,6 +78,15 @@ Or use Docker Compose:
 docker compose up -d --build
 ```
 Then open http://<server-ip>:8080
+
+## Performance & Architecture
+
+- __Preview off the main thread__ — `src/lib/previewWorker.js` runs heavy rendering in a Web Worker. It streams `progress` events so the UI remains responsive and you get live progress.
+- __Quality scaling for speed__ — In preview we scale down expensive params. Halftone accepts a `previewScale` hint and switches to faster modes (e.g., ordered dithering) for quick feedback; full quality is used on export.
+- __No redundant clipping for halftone__ — `computeRendered()` in `src/lib/renderer.js` skips global clipping when generators already constrain output, avoiding polygon blow‑ups.
+- __Travel/ordering optimized__ — `App.jsx` caches `overlayOrder`, computes it only when needed (travel/labels on and preview idle), and downsamples very large poly sets. For huge sets, a faster nearest‑neighbor method is used.
+- __Grid overlay__ — Background grid (container) plus SVG line grid over the page for crisp alignment. Color adapts to dark/light backgrounds.
+- __Responsive UI controls__ — Zoom/grid sliders are view‑only and do not trigger a re‑render; the rendering pill appears after a 250ms delay to avoid flicker.
 
 ## Plotter Settings
 
@@ -312,7 +354,7 @@ Notes:
 
 ## 🖼️ Photo → Halftone (Mono / CMYK)
 
-- In the sidebar Tools area (near Save/Load/Export), use:
+- In the sidebar __Import__ section, use:
   - `Photo → Mono Halftone` to create a single black halftone layer from an image.
   - `Photo → CMYK Halftone` to auto‑create four halftone layers (C, M, Y, K) with recommended screen angles.
 - Each created layer is a normal `Halftone` generator with the image bound as an in‑memory bitmap.
@@ -354,6 +396,21 @@ Set under “Toolpath Controls”:
 
 - __Start point & travel look odd?__
   - Use a Start preset, or Shift+Click the exact start. Turn on “Show Travel” to visualize non‑drawing moves.
+
+## Contributing
+
+Contributions are welcome!
+
+- __Requirements__
+  - Node 18+ (Node 20 recommended)
+  - pnpm/yarn/npm (repo currently uses npm)
+- __Commit style__
+  - Conventional commits are appreciated: `feat: ...`, `fix: ...`, `docs: ...`, `perf: ...`
+- __Local dev__
+  - `npm run dev` and open the Vite URL.
+  - Please add screenshots/GIFs for UI changes in PRs when possible.
+- __Issues__
+  - Include repro steps, your OS/Browser, and whether you used Docker or `npm run dev`.
 
 ## 🏗️ Development
 
