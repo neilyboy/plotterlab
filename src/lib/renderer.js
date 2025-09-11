@@ -34,6 +34,9 @@ import { tspArt } from './generators/tspArt.js'
 import { harmonograph } from './generators/harmonograph.js'
 import { deJong } from './generators/deJong.js'
 import { maze } from './generators/maze.js'
+import { reactionStrokes } from './generators/reactionStrokes.js'
+import { clifford } from './generators/clifford.js'
+import { sunflowerBands } from './generators/sunflowerBands.js'
 
 const GENERATORS = {
   spirograph: { name: 'Spirograph', fn: spirograph, params: {} },
@@ -68,6 +71,9 @@ const GENERATORS = {
   , harmonograph: { name: 'Harmonograph', fn: harmonograph, params: {} }
   , deJong: { name: 'De Jong Attractor', fn: deJong, params: {} }
   , maze: { name: 'Maze', fn: maze, params: {} }
+  , reactionStrokes: { name: 'Reaction Strokes', fn: reactionStrokes, params: {} }
+  , clifford: { name: 'Clifford Attractor', fn: clifford, params: {} }
+  , sunflowerBands: { name: 'Sunflower Bands', fn: sunflowerBands, params: {} }
 }
 
 // Geometry helpers for global clipping
@@ -231,6 +237,9 @@ function scaleParamsForPreview(genKey, params, q) {
     , harmonograph: ['steps']
     , deJong: ['iter']
     , maze: ['cols','rows']
+    , reactionStrokes: ['cols','rows','steps','seedsX','seedsY','maxSteps']
+    , clifford: ['iter']
+    , sunflowerBands: ['count']
   }
   const k = keysToScaleInt[genKey] || []
   const out = { ...params }
@@ -412,7 +421,6 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
       const p = quality < 0.999 ? scaleParamsForPreview(layer.generator, baseParams, quality) : baseParams
       const effMargin = (p && Number.isFinite(p.margin)) ? p.margin : docArg.margin
       const onProgress = (f)=>{
-        hadInnerProgress = true
         const frac = Math.max(0, Math.min(1, Number(f)||0))
         progressCb && progressCb({ pct: Math.min(1, (idx + frac) / Math.max(1,total)), idx: idx + frac, total, layerName: layer?.name || '', layerId: layer?.id })
       }

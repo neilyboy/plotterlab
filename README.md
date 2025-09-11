@@ -9,7 +9,7 @@ A modern, dark-themed web app for creating multi-layer generative SVG artwork an
 
 - Frontend: React + Vite + Tailwind
 - Backend: Express (serves built assets)
-- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands, L‑system, Phyllotaxis, Truchet Tiles, Hilbert Curve, Path Warp (link another layer), Image Contours (Marching Squares), Poisson Stipple, TSP Art, Harmonograph, De Jong Attractor, Maze
+- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands, L‑system, Phyllotaxis, Truchet Tiles, Hilbert Curve, Path Warp (link another layer), Image Contours (Marching Squares), Poisson Stipple, TSP Art, Harmonograph, De Jong Attractor, Maze, Reaction Strokes, Clifford Attractor, Sunflower Bands
 - Exports: ZIP of per-layer SVGs; G-code export modes (single combined file, per-layer ZIP, per-color ZIP)
 - Docker: Multi-stage image for easy hosting on Ubuntu
 
@@ -325,6 +325,20 @@ Open: http://localhost:8080 (or your server IP)
 - __Maze__
   - Recursive backtracker grid maze; walls output as line segments.
   - Params: `cols`, `rows`.
+
+- __Reaction Strokes__
+  - Gray–Scott reaction–diffusion field, then traces long strokes tangent to iso-lines.
+  - Params: RD (`cols`, `rows`, `steps`, `feed`, `kill`, `diffU`, `diffV`, `dt`) and Strokes (`seedsX`, `seedsY`, `minSpacing`, `stepLen`, `maxSteps`, `vMin`, `vMax`, `jitter`).
+  - Tip: Lower `minSpacing` for denser strokes; reduce `maxSteps` for shorter threads.
+
+- __Clifford Attractor__
+  - Iterated strange attractor normalized to the page.
+  - Params: `a, b, c, d`, `iter`, `burn`.
+
+- __Sunflower Bands__
+  - Phyllotaxis (Vogel spiral) dots rendered as small circle outlines within repeating radial bands.
+  - Params: `count`, `spacing`, `angleDeg`, `dotSize`, `bandPeriod`, `bandDuty`, `jitter`.
+  - Tip: Layer multiple colors with slight `bandPeriod`/`bandDuty` offsets for vibrant NES‑tube vibes.
 
 ## 👆 On‑Canvas Picker (Clip to Polygon)
 

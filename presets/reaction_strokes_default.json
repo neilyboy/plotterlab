@@ -1,0 +1,42 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Reaction Strokes",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "reactionStrokes",
+      "params": {
+        "cols": 160,
+        "rows": 110,
+        "steps": 450,
+        "feed": 0.036,
+        "kill": 0.062,
+        "diffU": 0.16,
+        "diffV": 0.08,
+        "dt": 1,
+        "seedsX": 36,
+        "seedsY": 26,
+        "minSpacing": 2.4,
+        "stepLen": 1.1,
+        "maxSteps": 650,
+        "vMin": 0.18,
+        "vMax": 0.82,
+        "jitter": 0.25,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

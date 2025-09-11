@@ -1,0 +1,69 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Sunflower Bands C",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "sunflowerBands",
+      "params": {
+        "count": 1000,
+        "spacing": 3.0,
+        "angleDeg": 137.50776405003785,
+        "dotSize": 2.2,
+        "bandPeriod": 7,
+        "bandDuty": 0.55,
+        "jitter": 0.12,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l2",
+      "name": "Sunflower Bands M",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "sunflowerBands",
+      "params": {
+        "count": 1000,
+        "spacing": 3.0,
+        "angleDeg": 137.50776405003785,
+        "dotSize": 2.0,
+        "bandPeriod": 8,
+        "bandDuty": 0.5,
+        "jitter": 0.12,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l3",
+      "name": "Sunflower Bands Y",
+      "color": "#FFF200",
+      "visible": true,
+      "generator": "sunflowerBands",
+      "params": {
+        "count": 1000,
+        "spacing": 3.0,
+        "angleDeg": 137.50776405003785,
+        "dotSize": 1.8,
+        "bandPeriod": 9,
+        "bandDuty": 0.6,
+        "jitter": 0.12,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

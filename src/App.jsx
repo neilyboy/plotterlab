@@ -43,6 +43,9 @@ import { poissonStipple } from './lib/generators/poissonStipple.js'
 import { tspArt } from './lib/generators/tspArt.js'
 import { harmonograph } from './lib/generators/harmonograph.js'
 import { deJong } from './lib/generators/deJong.js'
+import { reactionStrokes } from './lib/generators/reactionStrokes.js'
+import { clifford } from './lib/generators/clifford.js'
+import { sunflowerBands } from './lib/generators/sunflowerBands.js'
 import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
 
@@ -602,26 +605,53 @@ const GENERATORS = {
       margin: 20,
       simplifyTol: 0
     }
+  },
+  reactionStrokes: {
+    name: 'Reaction Strokes',
+    fn: reactionStrokes,
+    params: {
+      cols: 160,
+      rows: 110,
+      steps: 450,
+      feed: 0.036,
+      kill: 0.062,
+      diffU: 0.16,
+      diffV: 0.08,
+      dt: 1.0,
+      seedsX: 36,
+      seedsY: 26,
+      minSpacing: 2.4,
+      stepLen: 1.1,
+      maxSteps: 650,
+      vMin: 0.18,
+      vMax: 0.82,
+      jitter: 0.25,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  clifford: {
+    name: 'Clifford Attractor',
+    fn: clifford,
+    params: { a: -1.7, b: 1.3, c: -0.1, d: -1.21, iter: 150000, burn: 1000, margin: 20, simplifyTol: 0 }
+  },
+  sunflowerBands: {
+    name: 'Sunflower Bands',
+    fn: sunflowerBands,
+    params: {
+      count: 900,
+      spacing: 3.2,
+      angleDeg: 137.50776405003785,
+      dotSize: 2.0,
+      bandPeriod: 7,
+      bandDuty: 0.55,
+      jitter: 0.15,
+      margin: 20,
+      simplifyTol: 0
+    }
   }
 
 };
-
-  const openImageForLayer = (layerId) => { setImageTargetLayerId(layerId); imageRef.current?.click() }
-  const onImageFilePicked = async (e) => {
-    const file = e.target.files?.[0]
-    try {
-      if (file && imageTargetLayerId) await onLayerImageSelected(imageTargetLayerId, file)
-    } catch (err) {
-      console.error('Image pick failed', err)
-    } finally {
-      setImageTargetLayerId(null)
-      if (e.target) e.target.value = ''
-    }
-  }
-  const clearLayerImage = (layerId) => {
-    setBitmaps(m => { const n = { ...m }; delete n[layerId]; return n })
-    setLayers(ls => ls.map(l => l.id === layerId ? ({ ...l, params: { ...l.params, imageInfo: '' } }) : l))
-  }
  
   // Quasicrystal presets helper
   const qcPresetValues = (name) => {
@@ -938,6 +968,23 @@ export default function App() {
   const imageRef = useRef(null)
   const [imageTargetLayerId, setImageTargetLayerId] = useState(null)
   const svgRef = useRef(null)
+  // Per-layer image loader handlers (Image Source group)
+  const openImageForLayer = (layerId) => { setImageTargetLayerId(layerId); imageRef.current?.click() }
+  const onImageFilePicked = async (e) => {
+    const file = e.target.files?.[0]
+    try {
+      if (file && imageTargetLayerId) await onLayerImageSelected(imageTargetLayerId, file)
+    } catch (err) {
+      console.error('Image pick failed', err)
+    } finally {
+      setImageTargetLayerId(null)
+      if (e.target) e.target.value = ''
+    }
+  }
+  const clearLayerImage = (layerId) => {
+    setBitmaps(m => { const n = { ...m }; delete n[layerId]; return n })
+    setLayers(ls => ls.map(l => l.id === layerId ? ({ ...l, params: { ...l.params, imageInfo: '' } }) : l))
+  }
   const stageRef = useRef(null)
   const fittingRef = useRef(false)
   const lastFitRef = useRef({ w: 0, h: 0 })
