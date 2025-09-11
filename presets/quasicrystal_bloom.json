@@ -1,0 +1,37 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 1.1,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Quasicrystal Bloom",
+      "color": "#f472b6",
+      "visible": true,
+      "generator": "quasicrystalContours",
+      "params": {
+        "waves": 9,
+        "freq": 0.09,
+        "contrast": 1.35,
+        "phase": 0,
+        "cols": 180,
+        "rows": 120,
+        "iso": 0.0,
+        "rotateDeg": 10,
+        "warp": 0.2,
+        "animatePhase": false,
+        "phaseSpeed": 1.0,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

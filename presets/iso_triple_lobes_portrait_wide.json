@@ -1,0 +1,38 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "portrait",
+    "width": 297,
+    "height": 420,
+    "margin": 18,
+    "bleed": 0,
+    "strokeWidth": 0.35,
+    "bg": "#0b0f14",
+    "startPreset": "center",
+    "fastPreview": false,
+    "previewQuality": 1
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Triple Lobes (Portrait – Wide)",
+      "color": "#e5e7eb",
+      "visible": true,
+      "generator": "isoContours",
+      "params": {
+        "cols": 260,
+        "rows": 360,
+        "levels": 80,
+        "separation": 190,
+        "lobes": 3,
+        "sigmaX": 120,
+        "sigmaY": 60,
+        "amplitude": 1,
+        "bias": 0.16,
+        "warp": 0.0,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

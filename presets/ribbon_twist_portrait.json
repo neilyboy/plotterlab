@@ -1,0 +1,69 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "portrait",
+    "width": 297,
+    "height": 420,
+    "margin": 18,
+    "bleed": 0,
+    "strokeWidth": 0.32,
+    "bg": "#0b0f14",
+    "startPreset": "center",
+    "fastPreview": false,
+    "previewQuality": 1
+  },
+  "layers": [
+    {
+      "id": "r1",
+      "name": "Ribbons Black",
+      "color": "#1a1a1a",
+      "visible": true,
+      "generator": "flowRibbons",
+      "params": {
+        "seedsX": 44,
+        "seedsY": 68,
+        "minSpacing": 1.5,
+        "stepLen": 0.85,
+        "maxSteps": 2200,
+        "centers": 3,
+        "sep": 170,
+        "sigma": 95,
+        "swirl": 1.2,
+        "swirlAlt": true,
+        "baseAngleDeg": -16,
+        "drift": 0.22,
+        "noiseAmp": 0.12,
+        "noiseScale": 0.010,
+        "followOnly": false,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "r2",
+      "name": "Ribbons Red",
+      "color": "#ef4444",
+      "visible": true,
+      "generator": "flowRibbons",
+      "params": {
+        "seedsX": 44,
+        "seedsY": 68,
+        "minSpacing": 1.5,
+        "stepLen": 0.85,
+        "maxSteps": 2200,
+        "centers": 3,
+        "sep": 170,
+        "sigma": 95,
+        "swirl": 1.35,
+        "swirlAlt": false,
+        "baseAngleDeg": -12,
+        "drift": 0.18,
+        "noiseAmp": 0.10,
+        "noiseScale": 0.010,
+        "followOnly": false,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

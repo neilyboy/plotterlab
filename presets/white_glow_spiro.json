@@ -1,0 +1,33 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.8,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "wg1",
+      "name": "White Spiro",
+      "color": "#e5e7eb",
+      "visible": true,
+      "generator": "spirograph",
+      "params": {
+        "R": 120,
+        "r": 35,
+        "d": 50,
+        "turns": 2100,
+        "step": 0.015,
+        "centerX": 210,
+        "centerY": 148,
+        "scale": 1,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

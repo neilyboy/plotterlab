@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  plotterlab:
+    build: .
+    image: plotterlab:latest
+    container_name: plotterlab
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped

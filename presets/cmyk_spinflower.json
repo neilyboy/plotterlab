@@ -1,0 +1,93 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 16,
+    "bleed": 0,
+    "strokeWidth": 1.0,
+    "bg": "#f8fafc",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "cm1",
+      "name": "Cyan Petals",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 12,
+        "a": 1,
+        "b": 1,
+        "n1": 0.34,
+        "n2": 0.22,
+        "n3": 0.22,
+        "rings": 66,
+        "steps": 1000,
+        "inner": 0.11,
+        "rotateDeg": 0,
+        "morph": 0.28,
+        "twistDeg": 25,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": false,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "cm2",
+      "name": "Magenta Petals",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 12,
+        "a": 1,
+        "b": 1,
+        "n1": 0.34,
+        "n2": 0.22,
+        "n3": 0.22,
+        "rings": 66,
+        "steps": 1000,
+        "inner": 0.11,
+        "rotateDeg": 7,
+        "morph": 0.28,
+        "twistDeg": -25,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": false,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "cm3",
+      "name": "Yellow Petals",
+      "color": "#FFF200",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 12,
+        "a": 1,
+        "b": 1,
+        "n1": 0.34,
+        "n2": 0.22,
+        "n3": 0.22,
+        "rings": 66,
+        "steps": 1000,
+        "inner": 0.11,
+        "rotateDeg": -7,
+        "morph": 0.28,
+        "twistDeg": 10,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": false,
+        "margin": 18,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+// Web Worker: off-main-thread renderer for previews
+// Receives { id, layers, doc, mdiCache, bitmaps, quality }
+// Sends { id, type:'progress', progress } and { id, type:'done', outputs } or { id, type:'error', message }
+
+import { computeRendered } from './renderer.js'
+import { polylineToPath } from './geometry.js'
+
+self.onmessage = async (e) => {
+  const { id, layers, doc, mdiCache, bitmaps, quality } = e.data || {}
+  try {
+    const outputs = computeRendered(layers || [], doc || {}, mdiCache || {}, bitmaps || {}, quality || 1, (p) => {
+      let pct = 0
+      let detail = null
+      if (typeof p === 'number') {
+        pct = p
+      } else if (p && typeof p === 'object') {
+        pct = Number(p.pct)
+        detail = p
+      }
+      if (!Number.isFinite(pct)) pct = 0
+      pct = Math.max(0, Math.min(1, pct))
+      self.postMessage({ id, type: 'progress', progress: pct, detail })
+    })
+    const paths = outputs.map(({ layer, polylines }) => ({ layer, d: (polylines||[]).map(polylineToPath).join(' ') }))
+    self.postMessage({ id, type: 'done', outputs, paths })
+  } catch (err) {
+    self.postMessage({ id, type: 'error', message: String(err && err.message || err) })
+  }
+}

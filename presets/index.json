@@ -1,0 +1,20 @@
+[
+  { "label": "Iso Triple Lobes", "file": "iso_triple_lobes.json" },
+  { "label": "Iso Hourglass", "file": "iso_hourglass.json" },
+  { "label": "Super Bloom Twist", "file": "super_bloom_twist.json" },
+  { "label": "Super Spiky Gear", "file": "super_spiky_gear.json" },
+  { "label": "Wave Moiré Tubes", "file": "wave_moire_tubes.json" },
+  { "label": "Streamlines Long Follow", "file": "streamlines_long_follow.json" },
+  { "label": "Stripe Bands Radial Bloom", "file": "stripebands_radial_bloom.json" },
+  { "label": "Quasicrystal Bloom", "file": "quasicrystal_bloom.json" },
+  { "label": "Hatch Super Clip", "file": "hatch_super_clip.json" },
+  { "label": "Iso Triple Lobes (Portrait)", "file": "iso_triple_lobes_portrait.json" },
+  { "label": "Flow Field Nebula", "file": "flow_field_nebula.json" },
+  { "label": "Iso Triple Lobes (Portrait – Wide)", "file": "iso_triple_lobes_portrait_wide.json" },
+  { "label": "Ribbon Twist Portrait", "file": "ribbon_twist_portrait.json" },
+  { "label": "Rosette Weave Knot", "file": "rosette_weave_knot.json" },
+  { "label": "Poly Op Lattice", "file": "poly_op_lattice.json" },
+  { "label": "White Glow Spiro", "file": "white_glow_spiro.json" },
+  { "label": "CMYK Spinflower", "file": "cmyk_spinflower.json" },
+  { "label": "Radial Orbitals", "file": "radial_orbitals.json" }
+]

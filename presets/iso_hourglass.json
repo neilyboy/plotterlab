@@ -1,0 +1,36 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 1.1,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Iso Hourglass",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "isoContours",
+      "params": {
+        "cols": 160,
+        "rows": 120,
+        "levels": 64,
+        "separation": 80,
+        "lobes": 2,
+        "sigmaX": 100,
+        "sigmaY": 60,
+        "amplitude": 1,
+        "bias": 0.16,
+        "warp": 0.10,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

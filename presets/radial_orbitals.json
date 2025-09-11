@@ -1,0 +1,54 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 18,
+    "bleed": 0,
+    "strokeWidth": 1.0,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "ro1",
+      "name": "Radial Waves",
+      "color": "#60a5fa",
+      "visible": true,
+      "generator": "waveMoire",
+      "params": {
+        "lines": 220,
+        "freqA": 0.032,
+        "freqB": 0.053,
+        "phase": 0,
+        "amp": 22,
+        "angleDeg": 0,
+        "warp": 0.5,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "ro2",
+      "name": "Orbit Dots",
+      "color": "#ef4444",
+      "visible": true,
+      "generator": "mdiPattern",
+      "params": {
+        "iconIndex": 0,
+        "iconName": "mdiCheckboxBlankCircle",
+        "cols": 48,
+        "rows": 36,
+        "spacing": 26,
+        "scale": 2.4,
+        "rotation": 0,
+        "jitter": 0.02,
+        "margin": 20,
+        "samples": 220,
+        "clipRule": "even-odd",
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 16,
+    "bleed": 0,
+    "strokeWidth": 1.2,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "rw1",
+      "name": "Rosette Base",
+      "color": "#e5e7eb",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 10,
+        "a": 1,
+        "b": 1,
+        "n1": 0.28,
+        "n2": 0.26,
+        "n3": 0.26,
+        "rings": 70,
+        "steps": 1100,
+        "inner": 0.1,
+        "rotateDeg": 0,
+        "morph": 0.28,
+        "twistDeg": 60,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "rw2",
+      "name": "Rosette Weave A",
+      "color": "#8b5cf6",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 10,
+        "a": 1,
+        "b": 1,
+        "n1": 0.28,
+        "n2": 0.26,
+        "n3": 0.26,
+        "rings": 56,
+        "steps": 1000,
+        "inner": 0.12,
+        "rotateDeg": 9,
+        "morph": 0.32,
+        "twistDeg": 40,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": true,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "rw3",
+      "name": "Rosette Weave B",
+      "color": "#ef4444",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 10,
+        "a": 1,
+        "b": 1,
+        "n1": 0.28,
+        "n2": 0.26,
+        "n3": 0.26,
+        "rings": 56,
+        "steps": 1000,
+        "inner": 0.12,
+        "rotateDeg": -9,
+        "morph": 0.32,
+        "twistDeg": -40,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": true,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}
