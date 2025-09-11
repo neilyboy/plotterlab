@@ -28,6 +28,12 @@ import { phyllotaxis } from './generators/phyllotaxis.js'
 import { truchet } from './generators/truchet.js'
 import { hilbert } from './generators/hilbert.js'
 import { pathWarp } from './generators/pathWarp.js'
+import { imageContours } from './generators/imageContours.js'
+import { poissonStipple } from './generators/poissonStipple.js'
+import { tspArt } from './generators/tspArt.js'
+import { harmonograph } from './generators/harmonograph.js'
+import { deJong } from './generators/deJong.js'
+import { maze } from './generators/maze.js'
 
 const GENERATORS = {
   spirograph: { name: 'Spirograph', fn: spirograph, params: {} },
@@ -55,7 +61,13 @@ const GENERATORS = {
   phyllotaxis: { name: 'Phyllotaxis', fn: phyllotaxis, params: {} },
   truchet: { name: 'Truchet Tiles', fn: truchet, params: {} },
   hilbert: { name: 'Hilbert Curve', fn: hilbert, params: {} },
-  pathWarp: { name: 'Path Warp', fn: pathWarp, params: {} }
+  pathWarp: { name: 'Path Warp', fn: pathWarp, params: {} },
+  imageContours: { name: 'Image Contours', fn: imageContours, params: {} },
+  poissonStipple: { name: 'Poisson Stipple', fn: poissonStipple, params: {} },
+  tspArt: { name: 'TSP Art', fn: tspArt, params: {} }
+  , harmonograph: { name: 'Harmonograph', fn: harmonograph, params: {} }
+  , deJong: { name: 'De Jong Attractor', fn: deJong, params: {} }
+  , maze: { name: 'Maze', fn: maze, params: {} }
 }
 
 // Geometry helpers for global clipping
@@ -212,7 +224,13 @@ function scaleParamsForPreview(genKey, params, q) {
     lsystem: ['iterations'],
     phyllotaxis: ['count'],
     truchet: ['cols','rows'],
-    pathWarp: ['copies']
+    pathWarp: ['copies'],
+    imageContours: ['cols','rows','levels'],
+    poissonStipple: ['attempts'],
+    tspArt: ['points']
+    , harmonograph: ['steps']
+    , deJong: ['iter']
+    , maze: ['cols','rows']
   }
   const k = keysToScaleInt[genKey] || []
   const out = { ...params }
@@ -332,6 +350,9 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
           const idx2 = layer.params?.clipIndex || 0
           extra = { ...extra, clipPolys: pickClipPolys(closed, which, idx2) }
         }
+      }
+      if (layer.generator === 'imageContours' || layer.generator === 'poissonStipple' || layer.generator === 'tspArt') {
+        extra = { ...extra, bitmap: bitmapsArg[layer.id] }
       }
       if (layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') {
         let closed = []

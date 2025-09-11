@@ -38,6 +38,11 @@ import { phyllotaxis } from './lib/generators/phyllotaxis.js'
 import { truchet } from './lib/generators/truchet.js'
 import { hilbert } from './lib/generators/hilbert.js'
 import { pathWarp } from './lib/generators/pathWarp.js'
+import { imageContours } from './lib/generators/imageContours.js'
+import { poissonStipple } from './lib/generators/poissonStipple.js'
+import { tspArt } from './lib/generators/tspArt.js'
+import { harmonograph } from './lib/generators/harmonograph.js'
+import { deJong } from './lib/generators/deJong.js'
 import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
 
@@ -524,8 +529,100 @@ const GENERATORS = {
       margin: 20,
       simplifyTol: 0
     }
+  },
+  imageContours: {
+    name: 'Image Contours',
+    fn: imageContours,
+    params: {
+      cols: 140,
+      rows: 100,
+      levels: 8,
+      invert: false,
+      gamma: 1.0,
+      preserveAspect: true,
+      imageInfo: '',
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  poissonStipple: {
+    name: 'Poisson Stipple',
+    fn: poissonStipple,
+    params: {
+      minDist: 6,
+      attempts: 8000,
+      useImage: true,
+      invert: false,
+      gamma: 1.0,
+      preserveAspect: true,
+      dotMin: 0.5,
+      dotMax: 1.8,
+      connectPath: false,
+      imageInfo: '',
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  tspArt: {
+    name: 'TSP Art',
+    fn: tspArt,
+    params: {
+      points: 2000,
+      useImage: true,
+      invert: false,
+      gamma: 1.0,
+      preserveAspect: true,
+      improveIters: 0,
+      imageInfo: '',
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  harmonograph: {
+    name: 'Harmonograph',
+    fn: harmonograph,
+    params: {
+      Ax: 120, Ay: 80,
+      fx: 0.21, fy: 0.19,
+      px: 0, py: Math.PI/2,
+      dx: 0.01, dy: 0.012,
+      tMax: 60,
+      steps: 8000,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  deJong: {
+    name: 'De Jong Attractor',
+    fn: deJong,
+    params: {
+      a: 2.01, b: -2.53, c: 1.61, d: -0.33,
+      iter: 120000,
+      burn: 1000,
+      margin: 20,
+      simplifyTol: 0
+    }
   }
+
 };
+
+  const openImageForLayer = (layerId) => { setImageTargetLayerId(layerId); imageRef.current?.click() }
+  const onImageFilePicked = async (e) => {
+    const file = e.target.files?.[0]
+    try {
+      if (file && imageTargetLayerId) await onLayerImageSelected(imageTargetLayerId, file)
+    } catch (err) {
+      console.error('Image pick failed', err)
+    } finally {
+      setImageTargetLayerId(null)
+      if (e.target) e.target.value = ''
+    }
+  }
+  const clearLayerImage = (layerId) => {
+    setBitmaps(m => { const n = { ...m }; delete n[layerId]; return n })
+    setLayers(ls => ls.map(l => l.id === layerId ? ({ ...l, params: { ...l.params, imageInfo: '' } }) : l))
+  }
+ 
   // Quasicrystal presets helper
   const qcPresetValues = (name) => {
     switch (name) {
@@ -838,6 +935,8 @@ export default function App() {
   const fileRef = useRef(null)
   const photoRef = useRef(null)
   const [photoMode, setPhotoMode] = useState(null) // 'mono' | 'cmyk'
+  const imageRef = useRef(null)
+  const [imageTargetLayerId, setImageTargetLayerId] = useState(null)
   const svgRef = useRef(null)
   const stageRef = useRef(null)
   const fittingRef = useRef(false)
@@ -2614,6 +2713,7 @@ export default function App() {
 
           <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiImageMultipleOutline}/> <span>Import</span></h2></div>
           <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-2 items-start mt-2">
+            <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={onImageFilePicked} />
           </div>
 
           <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiExportVariant}/> <span>Export</span></h2></div>
@@ -3087,6 +3187,26 @@ export default function App() {
                       )}
                     </div>
                   )}
+                  {/* Grouped controls for Image-based generators: Halftone, Pixel Mosaic, Image Contours, Poisson Stipple, TSP Art */}
+                  {(['halftone','pixelMosaic','imageContours','poissonStipple','tspArt'].includes(layer.generator)) && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Image Source</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'img')}>{isGroupOpen(layer.id,'img')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'img') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          <div className="flex items-center gap-2">
+                            <button className="btn" onClick={()=>openImageForLayer(layer.id)}>Load Image</button>
+                            <button className="btn" disabled={!bitmaps[layer.id]} onClick={()=>clearLayerImage(layer.id)}>Clear</button>
+                          </div>
+                          <div className="text-xs opacity-70 col-span-2">
+                            {layer.params?.imageInfo ? `Loaded: ${layer.params.imageInfo}` : 'No image loaded'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {Object.entries(GENERATORS[layer.generator].params).map(([k,def]) => {
                     // Skip clip UI keys we render via custom block for these generators
                     if ((layer.generator === 'hatchFill' || layer.generator === 'halftone' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
@@ -3117,6 +3237,7 @@ export default function App() {
                     if (layer.generator === 'pathWarp' && (
                       ['srcLayerId','srcToPrevious','amp','scale','step','copies','rotateFlow'].includes(k)
                     )) return null
+                    if (k === 'imageInfo') return null
                     if (layer.generator === 'mdiPattern' && (
                       ['cols','rows','spacing','scale','rotation','jitter','samples','margin'].includes(k)
                     )) return null
