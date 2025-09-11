@@ -9,7 +9,7 @@ A modern, dark-themed web app for creating multi-layer generative SVG artwork an
 
 - Frontend: React + Vite + Tailwind
 - Backend: Express (serves built assets)
-- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands
+- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands, L‑system, Phyllotaxis, Truchet Tiles, Hilbert Curve, Path Warp (link another layer), Image Contours (Marching Squares), Poisson Stipple, TSP Art, Harmonograph, De Jong Attractor, Maze
 - Exports: ZIP of per-layer SVGs; G-code export modes (single combined file, per-layer ZIP, per-color ZIP)
 - Docker: Multi-stage image for easy hosting on Ubuntu
 
@@ -166,6 +166,14 @@ This project’s code is MIT licensed. External dependencies retain their respec
 - 🩹 Bleed (mm) support for SVG exports
 - 🔍 Preview zoom-to-cursor, pan clamping, and sticky bottom controls
 
+## 🖼️ Screenshots
+
+> Place your screenshots in `docs/screenshots/` and update the paths below.
+
+![Overview UI](docs/screenshots/overview.png)
+
+![Path Warp + Image Contours](docs/screenshots/path-warp.png)
+
 ## 🚀 Quick Start (Docker Compose)
 
 ```bash
@@ -277,6 +285,47 @@ Open: http://localhost:8080 (or your server IP)
     - `tubeMinDuty` – minimum kept fraction at band edges.
     - `tubeCurve` – `tri` or `sin` profile for center weighting.
 
+- __Phyllotaxis__
+  - Vogel spiral points as either a connected path or dots.
+  - Params: `count`, `spacing`, `angleDeg` (commonly ~137.5), `connect`, `jitter`, `dotSize`.
+
+- __Truchet Tiles__
+  - Grid of curve or line variants with optional jitter.
+  - Params: `cols`, `rows`, `variant` (`curves` | `lines`), `jitter`.
+
+- __Hilbert Curve__
+  - Space-filling curve; param `order` controls recursion.
+
+- __Path Warp__
+  - Warps polylines from another layer (or the previous visible layer) through a noise field.
+  - Link in the layer UI: choose `Source Layer` or enable "use previous visible layer".
+  - Params: `amp`, `scale` (noise scale), `step` (resample), `copies`, `rotateFlow`.
+
+- __Image Contours__
+  - Marching Squares contour extraction from a loaded bitmap.
+  - Params: `cols`, `rows`, `levels`, `invert`, `gamma`, `preserveAspect`.
+  - Load a bitmap via the layer’s "Image Source" controls.
+
+- __Poisson Stipple__
+  - Blue-noise dots with minimum spacing; optionally denser in darker image regions.
+  - Params: `minDist`, `attempts`, `useImage`, `invert`, `gamma`, `preserveAspect`, `dotMin/dotMax`, `connectPath`.
+
+- __TSP Art__
+  - Single continuous path through many points; optionally image-weighted sampling.
+  - Params: `points`, `useImage`, `invert`, `gamma`, `preserveAspect`, `improveIters`.
+
+- __Harmonograph__
+  - Damped sinusoidal Lissajous-like curves.
+  - Params: `Ax/Ay`, `fx/fy`, `px/py`, `dx/dy`, `tMax`, `steps`.
+
+- __De Jong Attractor__
+  - Strange attractor; iterated map normalized into page.
+  - Params: `a, b, c, d`, `iter`, `burn`.
+
+- __Maze__
+  - Recursive backtracker grid maze; walls output as line segments.
+  - Params: `cols`, `rows`.
+
 ## 👆 On‑Canvas Picker (Clip to Polygon)
 
 For `Hatch Fill`, `Halftone`, `MDI Pattern`, and `SVG Import` layers:
@@ -307,6 +356,18 @@ Interactively move/scale/rotate any `SVG Import` layer.
 Notes:
 - Works with current zoom/pan. Zoom with the mouse wheel to get precision.
 - You can fine-tune the same parameters numerically in the layer panel.
+
+## 🔗 Layer Linking (Path Warp)
+
+- Add a `Path Warp` layer below or above your source geometry.
+- Open its group and set `Source Layer` or enable `use previous visible layer` to link dynamically.
+- Tweak `amp`, `scale`, `step`, and `copies` for different warp looks.
+- Great combos:
+  - Image Contours → Path Warp (wavy outlines)
+  - Poisson Stipple (connectPath) → Path Warp (single flowing ribbon)
+  - Hilbert or L‑system → Path Warp (organicized structure)
+
+Tip: You can still clip warped output using the usual Clip Layer controls in other generators.
 
 ## ⌨️ Keyboard & Mouse
 
@@ -363,6 +424,22 @@ Notes:
   - Method: Bayer, Floyd, or simple threshold.
   - Gamma/Invert: tone controls.
 - Bitmaps are ephemeral (kept in memory, not saved to localStorage). Re‑load the photo after a hard refresh.
+
+## 🖼️ Image‑Powered Generators
+
+Several generators consume a per‑layer bitmap via an "Image Source" group inside the layer UI:
+
+- Halftone / Dither
+- Pixel Mosaic
+- Image Contours
+- Poisson Stipple
+- TSP Art
+
+Click `Load Image` in the `Image Source` group to bind a bitmap to that layer (resolution is shown next to the button). Click `Clear` to remove it. Options like `invert`, `gamma`, and `preserveAspect` help match your material and look.
+
+Tips:
+- For Poisson Stipple and TSP Art, enabling `useImage` biases sampling to darker regions.
+- For Image Contours, `levels` sets how many iso lines to extract; `cols/rows` controls grid resolution.
 
 Per‑layer split buttons:
 - In any `Halftone` layer after loading an image, you can also click:
