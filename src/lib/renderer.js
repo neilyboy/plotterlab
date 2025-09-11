@@ -23,6 +23,11 @@ import { spirograph } from './generators/spirograph.js'
 import { isometricCity } from './generators/isometricCity.js'
 import { voronoiShatter } from './generators/voronoiShatter.js'
 import { svgImport } from './generators/svgImport.js'
+import { lsystem } from './generators/lsystem.js'
+import { phyllotaxis } from './generators/phyllotaxis.js'
+import { truchet } from './generators/truchet.js'
+import { hilbert } from './generators/hilbert.js'
+import { pathWarp } from './generators/pathWarp.js'
 
 const GENERATORS = {
   spirograph: { name: 'Spirograph', fn: spirograph, params: {} },
@@ -45,7 +50,12 @@ const GENERATORS = {
   stripeBands: { name: 'Stripe Bands', fn: stripeBands, params: {} },
   starLattice: { name: 'Star Lattice', fn: starLattice, params: {} },
   retroPipes: { name: 'Retro Pipes', fn: retroPipes, params: {} },
-  svgImport: { name: 'SVG Import', fn: svgImport, params: {} }
+  svgImport: { name: 'SVG Import', fn: svgImport, params: {} },
+  lsystem: { name: 'L-system', fn: lsystem, params: {} },
+  phyllotaxis: { name: 'Phyllotaxis', fn: phyllotaxis, params: {} },
+  truchet: { name: 'Truchet Tiles', fn: truchet, params: {} },
+  hilbert: { name: 'Hilbert Curve', fn: hilbert, params: {} },
+  pathWarp: { name: 'Path Warp', fn: pathWarp, params: {} }
 }
 
 // Geometry helpers for global clipping
@@ -199,6 +209,10 @@ function scaleParamsForPreview(genKey, params, q) {
     reactionContours: ['cols','rows','steps'],
     quasicrystalContours: ['cols','rows'],
     stripeBands: ['cols','rows','levels'],
+    lsystem: ['iterations'],
+    phyllotaxis: ['count'],
+    truchet: ['cols','rows'],
+    pathWarp: ['copies']
   }
   const k = keysToScaleInt[genKey] || []
   const out = { ...params }

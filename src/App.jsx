@@ -33,6 +33,11 @@ import { quasicrystalContours } from './lib/generators/quasicrystalContours.js'
 import { stripeBands } from './lib/generators/stripeBands.js'
 import { polarStarburst } from './lib/generators/polarStarburst.js'
 import { flowRibbons } from './lib/generators/flowRibbons.js'
+import { lsystem } from './lib/generators/lsystem.js'
+import { phyllotaxis } from './lib/generators/phyllotaxis.js'
+import { truchet } from './lib/generators/truchet.js'
+import { hilbert } from './lib/generators/hilbert.js'
+import { pathWarp } from './lib/generators/pathWarp.js'
 import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
 
@@ -454,6 +459,69 @@ const GENERATORS = {
       offsetY: 0,
       rotateDeg: 0,
       clipRule: 'union',
+      simplifyTol: 0
+    }
+  },
+  lsystem: {
+    name: 'L-system',
+    fn: lsystem,
+    params: {
+      preset: 'koch', // 'koch' | 'dragon' | 'plant'
+      iterations: 4,
+      angleDeg: 60,
+      step: 6,
+      jitter: 0,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  phyllotaxis: {
+    name: 'Phyllotaxis',
+    fn: phyllotaxis,
+    params: {
+      count: 1500,
+      angleDeg: 137.507764,
+      spacing: 2.8,
+      connect: true,
+      jitter: 0,
+      dotSize: 1.4,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  truchet: {
+    name: 'Truchet Tiles',
+    fn: truchet,
+    params: {
+      cols: 24,
+      rows: 16,
+      variant: 'curves', // 'curves' | 'lines'
+      jitter: 0,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  hilbert: {
+    name: 'Hilbert Curve',
+    fn: hilbert,
+    params: {
+      order: 6,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  pathWarp: {
+    name: 'Path Warp',
+    fn: pathWarp,
+    params: {
+      srcLayerId: '',
+      srcToPrevious: false,
+      amp: 3.5,
+      scale: 0.02,
+      step: 1.2,
+      copies: 1,
+      rotateFlow: false,
+      margin: 20,
       simplifyTol: 0
     }
   }
@@ -2918,6 +2986,107 @@ export default function App() {
                       )}
                     </div>
                   )}
+                  {/* Grouped controls for L-system */}
+                  {layer.generator === 'lsystem' && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">L-system</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'lsys')}>{isGroupOpen(layer.id,'lsys')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'lsys') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          <label className={labelClass}>Preset
+                            <Select value={layer.params.preset || 'koch'}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, preset:v}}:l))}
+                              options={[{label:'Koch snowflake',value:'koch'},{label:'Dragon',value:'dragon'},{label:'Plant',value:'plant'}]}
+                            />
+                          </label>
+                          {renderNumParam(layer,'iterations','Iterations')}
+                          {renderNumParam(layer,'angleDeg','AngleDeg')}
+                          {renderNumParam(layer,'step','Step')}
+                          {renderNumParam(layer,'jitter','Jitter')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Grouped controls for Truchet */}
+                  {layer.generator === 'truchet' && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Truchet Tiles</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'truchet')}>{isGroupOpen(layer.id,'truchet')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'truchet') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {renderNumParam(layer,'cols','Cols')}
+                          {renderNumParam(layer,'rows','Rows')}
+                          <label className={labelClass}>Variant
+                            <Select value={layer.params.variant || 'curves'}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, variant:v}}:l))}
+                              options={[{label:'Curves (quarter-circles)',value:'curves'},{label:'Lines (diagonals)',value:'lines'}]}
+                            />
+                          </label>
+                          {renderNumParam(layer,'jitter','Jitter')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Grouped controls for Phyllotaxis */}
+                  {layer.generator === 'phyllotaxis' && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Phyllotaxis</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'phyl')}>{isGroupOpen(layer.id,'phyl')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'phyl') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {renderNumParam(layer,'count','Count')}
+                          {renderNumParam(layer,'spacing','Spacing')}
+                          {renderNumParam(layer,'angleDeg','AngleDeg')}
+                          {renderNumParam(layer,'jitter','Jitter')}
+                          <label className={labelRowClass}>
+                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.connect}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, connect:e.target.checked}}:l))} />
+                            Connect seeds (single path)
+                          </label>
+                          {renderNumParam(layer,'dotSize','DotSize')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Grouped controls for Path Warp (links to another layer) */}
+                  {layer.generator === 'pathWarp' && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Path Warp (link to source layer)</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'warp')}>{isGroupOpen(layer.id,'warp')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'warp') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          <label className={labelClass}>Source Layer
+                            <Select value={layer.params.srcLayerId || ''}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcLayerId:v, srcToPrevious:false}}:l))}
+                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
+                            />
+                          </label>
+                          <label className={labelRowClass}>
+                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.srcToPrevious} disabled={!!layer.params.srcLayerId}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcToPrevious:e.target.checked}}:l))} />
+                            Or: use previous visible layer
+                          </label>
+                          {renderNumParam(layer,'amp','Amplitude')}
+                          {renderNumParam(layer,'scale','NoiseScale')}
+                          {renderNumParam(layer,'step','ResampleStep')}
+                          {renderNumParam(layer,'copies','Copies')}
+                          <label className={labelRowClass}>
+                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.rotateFlow}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, rotateFlow:e.target.checked}}:l))} />
+                            Use vector field (ignore tangent)
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {Object.entries(GENERATORS[layer.generator].params).map(([k,def]) => {
                     // Skip clip UI keys we render via custom block for these generators
                     if ((layer.generator === 'hatchFill' || layer.generator === 'halftone' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
@@ -2935,6 +3104,18 @@ export default function App() {
                     )) return null
                     if (layer.generator === 'svgImport' && (
                       ['scale','rotateDeg','offsetX','offsetY'].includes(k)
+                    )) return null
+                    if (layer.generator === 'lsystem' && (
+                      ['preset'].includes(k)
+                    )) return null
+                    if (layer.generator === 'truchet' && (
+                      ['variant','cols','rows','jitter'].includes(k)
+                    )) return null
+                    if (layer.generator === 'phyllotaxis' && (
+                      ['connect','count','spacing','angleDeg','jitter','dotSize'].includes(k)
+                    )) return null
+                    if (layer.generator === 'pathWarp' && (
+                      ['srcLayerId','srcToPrevious','amp','scale','step','copies','rotateFlow'].includes(k)
                     )) return null
                     if (layer.generator === 'mdiPattern' && (
                       ['cols','rows','spacing','scale','rotation','jitter','samples','margin'].includes(k)
