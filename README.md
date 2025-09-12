@@ -361,7 +361,13 @@ The app will set:
 
 Tip: When “Clip Mode = index”, the preview displays small labels at polygon centroids so you can dial in indices manually if you prefer.
 
-Note: A generic clipping step now applies to many generators that do not natively support clipping. You can set `Clip To Layer` or use `Clip to previous visible layer` to restrict outputs to shapes. Hatch/MDI/SVG Import retain advanced `Clip Rule` options (Union/Even‑Odd/Intersect/Difference). A dedicated “Fill Layers” UX is planned to streamline pattern‑fill workflows.
+Note: A generic clipping step now applies to many generators that do not natively support clipping. You can set `Clip To Layer` or use `Clip to previous visible layer` to restrict outputs to shapes.
+
+- Generic clipping supports `Clip Rule = Union` and `Even‑Odd`.
+- Halftone currently uses union-style clipping.
+- Hatch/MDI Pattern/SVG Import support advanced rules: `Union`, `Even‑Odd`, `Intersect`, `Difference`.
+
+A dedicated “Fill Layers” UX is planned to streamline pattern‑fill workflows.
 
 ## 🛠️ On‑Canvas Transform (SVG Import)
 

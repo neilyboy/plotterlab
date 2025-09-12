@@ -403,18 +403,25 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
         extra = { ...extra, bitmap: bitmapsArg[layer.id] }
       }
       if (layer.generator === 'halftone') {
-        extra = { ...extra, bitmap: bitmapsArg[layer.id] }
-        let closed = []
-        if (layer.params?.clipLayerId) {
-          closed = makeClipPolys(getLayerPolysById(layer.params.clipLayerId))
-        } else if (layer.params?.clipToPrevious) {
-          const prev = [...outputs].reverse().find(o => o.layer.visible && o.polylines && o.polylines.length)
-          if (prev) closed = makeClipPolys(prev.polylines)
-        }
-        if (closed.length) {
-          const which = layer.params?.clipMode || 'all'
-          const idx2 = layer.params?.clipIndex || 0
-          extra = { ...extra, clipPolys: pickClipPolys(closed, which, idx2) }
+        if (layer.params && (layer.params.clipLayerId || layer.params.clipToPrevious) && (layer.params.clipEnabled !== false)) {
+          let closed = []
+          if (layer.params.clipLayerId) {
+            closed = makeClipPolys(getLayerPolysById(layer.params.clipLayerId))
+          } else if (layer.params.clipToPrevious) {
+            const prev = [...outputs].reverse().find(o => o.layer.visible && o.polylines && o.polylines.length)
+            if (prev) closed = makeClipPolys(prev.polylines)
+          }
+          if (closed.length) {
+            const which = layer.params?.clipMode || 'all'
+            const idx2 = layer.params?.clipIndex || 0
+            let clips = []
+            if (which === 'index' && Array.isArray(layer.params?.clipIndices) && layer.params.clipIndices.length) {
+              for (const i of layer.params.clipIndices) { const ii = Math.max(0, Math.floor(i||0)); if (closed[ii]) clips.push(closed[ii]) }
+            } else {
+              clips = pickClipPolys(closed, which, idx2)
+            }
+            extra = { ...extra, clipPolys: clips }
+          }
         }
       }
       if (layer.generator === 'imageContours' || layer.generator === 'poissonStipple' || layer.generator === 'tspArt') {
@@ -435,57 +442,25 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
         const ringsB = layer.params?.srcB ? makeClipPolys(getLayerPolysById(layer.params.srcB)) : []
         extra = { ...extra, ringsA, ringsB }
       }
-      if (layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') {
+      if ((layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && layer.params && (layer.params.clipLayerId || layer.params.clipToPrevious) && (layer.params.clipEnabled !== false)) {
         let closed = []
-        if (layer.params?.clipLayerId) {
+        if (layer.params.clipLayerId) {
           closed = makeClipPolys(getLayerPolysById(layer.params.clipLayerId))
-        } else if (layer.params?.clipToPrevious) {
+        } else if (layer.params.clipToPrevious) {
           const prev = [...outputs].reverse().find(o => o.layer.visible && o.polylines && o.polylines.length)
           if (prev) closed = makeClipPolys(prev.polylines)
         }
         if (closed.length) {
           const which = layer.params?.clipMode || 'all'
-          const rule = layer.params?.clipRule || 'union'
-          if (layer.generator === 'hatchFill' && which === 'index' && (Array.isArray(layer.params?.clipIndices) || Number.isFinite(layer.params?.clipIndex))) {
-            const selectedIdx = (Array.isArray(layer.params.clipIndices) ? layer.params.clipIndices : [layer.params.clipIndex])
-              .map(n=>Math.max(0,Math.floor(n||0)))
-            const centroid = (p)=>{ let a=0,cx=0,cy=0; for(let i=0,j=p.length-1;i<p.length;j=i++){const x0=p[j][0],y0=p[j][1],x1=p[i][0],y1=p[i][1]; const f=(x0*y1-x1*y0); a+=f; cx+=(x0+x1)*f; cy+=(y0+y1)*f} a*=0.5; if (Math.abs(a)<1e-6) return p[0]; return [cx/(6*a), cy/(6*a)] }
-            const areaAbs = (p)=>{ let a=0; for(let i=0,j=p.length-1;i<p.length;j=i++){ a += (p[j][0]*p[i][1] - p[i][0]*p[j][1]) } return Math.abs(a*0.5) }
-            const centers = closed.map(centroid)
-            const groups = []
-            for (const si of selectedIdx) {
-              const sel = closed[si]
-              if (!sel) continue
-              const selC = centers[si]
-              // Find the outermost container of the selected polygon (including itself)
-              let outerIdx = si
-              let outerArea = areaAbs(sel)
-              for (let j = 0; j < closed.length; j++) {
-                if (j === si) continue
-                if (pointInPolygon(selC, closed[j])) {
-                  const aj = areaAbs(closed[j])
-                  if (aj > outerArea) { outerArea = aj; outerIdx = j }
-                }
-              }
-              const outer = closed[outerIdx]
-              const inners = []
-              for (let j = 0; j < closed.length; j++) {
-                if (j === outerIdx) continue
-                const cj = centers[j]
-                if (pointInPolygon(cj, outer)) inners.push(closed[j])
-              }
-              groups.push([outer, ...inners])
-            }
-            if (groups.length) {
-              extra = { ...extra, clipGroups: groups }
-            } else {
-              const idx2 = layer.params?.clipIndex || 0
-              extra = { ...extra, clipPolys: pickClipPolys(closed, which, idx2), clipRule: rule }
-            }
+          const idx2 = layer.params?.clipIndex || 0
+          let clips = []
+          if (which === 'index' && Array.isArray(layer.params?.clipIndices) && layer.params.clipIndices.length) {
+            for (const i of layer.params.clipIndices) { const ii = Math.max(0, Math.floor(i||0)); if (closed[ii]) clips.push(closed[ii]) }
           } else {
-            const idx2 = layer.params?.clipIndex || 0
-            extra = { ...extra, clipPolys: pickClipPolys(closed, which, idx2), clipRule: rule }
+            clips = pickClipPolys(closed, which, idx2)
           }
+          const rule = layer.params?.clipRule || 'union'
+          extra = { ...extra, clipPolys: clips, clipRule: rule }
         }
       }
       // For mdiPattern/svgImport we also honor clipRule (already assigned above)
@@ -509,7 +484,12 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
         if (closed.length) {
           const which = layer.params?.clipMode || 'all'
           const idx2 = layer.params?.clipIndex || 0
-          const clips = pickClipPolys(closed, which, idx2)
+          let clips = []
+          if (which === 'index' && Array.isArray(layer.params?.clipIndices) && layer.params.clipIndices.length) {
+            for (const i of layer.params.clipIndices) { const ii = Math.max(0, Math.floor(i||0)); if (closed[ii]) clips.push(closed[ii]) }
+          } else {
+            clips = pickClipPolys(closed, which, idx2)
+          }
           if (clips && clips.length) {
             const rule = layer.params?.clipRule || 'union'
             poly = clipPolysToPolygonsWithRule(poly, clips, rule)

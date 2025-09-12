@@ -26,4 +26,5 @@
   , { "label": "Combinator (A ∩ B) → Bands", "file": "combinator_fill_bands.json" }
   , { "label": "Combinator (A − B) → Hatch", "file": "combinator_diff_hatch.json" }
   , { "label": "Combinator (A ⊕ B) → Stipple", "file": "combinator_xor_stipple.json" }
+  , { "label": "Combinator (A ∪ B) → Halftone Radial", "file": "combinator_union_halftone_radial.json" }
 ]

@@ -2773,6 +2773,15 @@ export default function App() {
           <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiImageMultipleOutline}/> <span>Import</span></h2></div>
           <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-2 items-start mt-2">
             <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={onImageFilePicked} />
+            <div className="flex gap-2 items-center col-span-2 lg:col-span-2">
+              <button className="btn flex-1" onClick={()=>{ setPhotoMode('mono'); photoRef.current?.click() }}>
+                {compactUI ? (<><Icon path={mdiImageMultipleOutline}/> Mono</>) : (<><Icon path={mdiImageMultipleOutline}/> Photo → Mono Halftone</>)}
+              </button>
+              <button className="btn flex-1" onClick={()=>{ setPhotoMode('cmyk'); photoRef.current?.click() }}>
+                {compactUI ? (<><Icon path={mdiPalette}/> CMYK</>) : (<><Icon path={mdiPalette}/> Photo → CMYK Halftone</>)}
+              </button>
+              <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={onPhotoSelected} />
+            </div>
           </div>
 
           <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiExportVariant}/> <span>Export</span></h2></div>
@@ -2808,15 +2817,6 @@ export default function App() {
                 {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Setup</>)}
               </button>
               <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleImport} />
-            </div>
-            <div className="flex gap-2 items-center col-span-2 lg:col-span-2">
-              <button className="btn flex-1" onClick={()=>{ setPhotoMode('mono'); photoRef.current?.click() }}>
-                {compactUI ? (<><Icon path={mdiImageMultipleOutline}/> Mono</>) : (<><Icon path={mdiImageMultipleOutline}/> Photo → Mono Halftone</>)}
-              </button>
-              <button className="btn flex-1" onClick={()=>{ setPhotoMode('cmyk'); photoRef.current?.click() }}>
-                {compactUI ? (<><Icon path={mdiPalette}/> CMYK</>) : (<><Icon path={mdiPalette}/> Photo → CMYK Halftone</>)}
-              </button>
-              <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={onPhotoSelected} />
             </div>
             <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10 col-span-2 lg:col-span-3 mt-2"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiLightbulbOutline}/> <span>Examples</span></h2></div>
             <div className="flex gap-2 items-center col-span-2 lg:col-span-3">
@@ -3515,15 +3515,21 @@ export default function App() {
                           <label className={labelClass}>Clip Rule
                             <Select value={layer.params.clipRule || 'union'}
                               onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipRule:v}}:l))}
-                              options={[
-                                {label:'Union (default)', value:'union'},
-                                {label:'Even-Odd', value:'evenodd'},
-                                ...((layer.generator==='hatchFill'||layer.generator==='mdiPattern'||layer.generator==='svgImport')
+                              options={
+                                (layer.generator==='halftone')
                                   ? [
-                                      {label:'Intersect', value:'intersect'},
-                                      {label:'Difference (first - others)', value:'difference'}
-                                    ] : [])
-                              ]}
+                                      {label:'Union (default)', value:'union'}
+                                    ]
+                                  : [
+                                      {label:'Union (default)', value:'union'},
+                                      {label:'Even-Odd', value:'evenodd'},
+                                      ...((layer.generator==='hatchFill'||layer.generator==='mdiPattern'||layer.generator==='svgImport')
+                                        ? [
+                                            {label:'Intersect', value:'intersect'},
+                                            {label:'Difference (first - others)', value:'difference'}
+                                          ] : [])
+                                    ]
+                              }
                             />
                           </label>
                           <div className="col-span-2 flex gap-2">
@@ -3553,7 +3559,7 @@ export default function App() {
                       )}
                     </div>
                   )}
-                  {layer.generator === 'hatchFill' && (layer.params.clipMode || 'all') === 'index' && (
+                  {(layer.params.clipMode || 'all') === 'index' && (
                     <div className="col-span-2 lg:col-span-3 grid grid-cols-1 gap-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs opacity-80">Selected:</span>
