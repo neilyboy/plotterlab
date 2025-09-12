@@ -37,6 +37,7 @@ import { maze } from './generators/maze.js'
 import { reactionStrokes } from './generators/reactionStrokes.js'
 import { clifford } from './generators/clifford.js'
 import { sunflowerBands } from './generators/sunflowerBands.js'
+import { combinator } from './generators/combinator.js'
 
 const GENERATORS = {
   spirograph: { name: 'Spirograph', fn: spirograph, params: {} },
@@ -74,6 +75,7 @@ const GENERATORS = {
   , reactionStrokes: { name: 'Reaction Strokes', fn: reactionStrokes, params: {} }
   , clifford: { name: 'Clifford Attractor', fn: clifford, params: {} }
   , sunflowerBands: { name: 'Sunflower Bands', fn: sunflowerBands, params: {} }
+  , combinator: { name: 'Combinator', fn: combinator, params: {} }
 }
 
 // Geometry helpers for global clipping
@@ -126,6 +128,61 @@ function clipPolysToRect(polys, x0, y0, x1, y1) {
   for (const pl of (polys||[])) {
     for (let i = 0; i < pl.length - 1; i++) {
       const segs = clipSegmentToPolygon(pl[i], pl[i+1], rect)
+      for (const s of segs) out.push(s)
+    }
+  }
+  return out
+}
+
+// Clip arbitrary polylines to an array of closed polygons (union rule)
+function clipPolysToPolygons(polys, clipPolys) {
+  if (!Array.isArray(clipPolys) || clipPolys.length === 0) return []
+  const out = []
+  for (const pl of (polys||[])) {
+    for (let i = 0; i < (pl?.length||0) - 1; i++) {
+      const a = pl[i], b = pl[i+1]
+      for (const poly of clipPolys) {
+        const segs = clipSegmentToPolygon(a, b, poly)
+        for (const s of segs) out.push(s)
+      }
+    }
+  }
+  return out
+}
+
+// Clip a single segment to multiple polygons using a rule ('union' | 'evenodd').
+function clipSegToPolysGeneric(a, b, polys, rule = 'union') {
+  const ts = [0, 1]
+  for (const poly of (polys||[])) {
+    for (let i = 0; i < poly.length - 1; i++) {
+      const inter = segIntersect(a, b, poly[i], poly[i+1])
+      if (inter) ts.push(inter[2])
+    }
+  }
+  ts.sort((x,y)=>x-y)
+  const segs = []
+  for (let i = 0; i < ts.length - 1; i++) {
+    const t0 = ts[i], t1 = ts[i+1]
+    if (t1 - t0 < 1e-6) continue
+    const tm = (t0 + t1) * 0.5
+    const mid = [a[0] + (b[0]-a[0]) * tm, a[1] + (b[1]-a[1]) * tm]
+    let count = 0
+    for (const poly of (polys||[])) if (pointInPolygon(mid, poly)) count++
+    const inside = (rule === 'evenodd') ? ((count & 1) === 1) : (count > 0)
+    if (inside) {
+      segs.push([[a[0] + (b[0]-a[0]) * t0, a[1] + (b[1]-a[1]) * t0], [a[0] + (b[0]-a[0]) * t1, a[1] + (b[1]-a[1]) * t1]])
+    }
+  }
+  return segs
+}
+
+function clipPolysToPolygonsWithRule(polys, clipPolys, rule = 'union') {
+  if (!Array.isArray(clipPolys) || clipPolys.length === 0) return []
+  const out = []
+  for (const pl of (polys||[])) {
+    for (let i = 0; i < (pl?.length||0) - 1; i++) {
+      const a = pl[i], b = pl[i+1]
+      const segs = clipSegToPolysGeneric(a, b, clipPolys, rule)
       for (const s of segs) out.push(s)
     }
   }
@@ -363,6 +420,21 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
       if (layer.generator === 'imageContours' || layer.generator === 'poissonStipple' || layer.generator === 'tspArt') {
         extra = { ...extra, bitmap: bitmapsArg[layer.id] }
       }
+      if (layer.generator === 'pathWarp') {
+        let src = []
+        if (layer.params?.srcToPrevious) {
+          const prev = [...outputs].reverse().find(o => o.layer.visible && o.polylines && o.polylines.length)
+          if (prev) src = prev.polylines
+        } else if (layer.params?.srcLayerId) {
+          src = getLayerPolysById(layer.params.srcLayerId)
+        }
+        extra = { ...extra, srcPolys: src }
+      }
+      if (layer.generator === 'combinator') {
+        const ringsA = layer.params?.srcA ? makeClipPolys(getLayerPolysById(layer.params.srcA)) : []
+        const ringsB = layer.params?.srcB ? makeClipPolys(getLayerPolysById(layer.params.srcB)) : []
+        extra = { ...extra, ringsA, ringsB }
+      }
       if (layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') {
         let closed = []
         if (layer.params?.clipLayerId) {
@@ -425,6 +497,27 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
         progressCb && progressCb({ pct: Math.min(1, (idx + frac) / Math.max(1,total)), idx: idx + frac, total, layerName: layer?.name || '', layerId: layer?.id })
       }
       let poly = gen.fn({ ...p, width: docArg.width, height: docArg.height, margin: effMargin, seed: docArg.seed, onProgress })
+      // Generic polygon clip for generators that don't natively clip
+      if (layer.params && (layer.params.clipLayerId || layer.params.clipToPrevious) && (layer.params.clipEnabled !== false) && !(layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport' || layer.generator === 'halftone')) {
+        let closed = []
+        if (layer.params.clipLayerId) {
+          closed = makeClipPolys(getLayerPolysById(layer.params.clipLayerId))
+        } else if (layer.params.clipToPrevious) {
+          const prev = [...outputs].reverse().find(o => o.layer.visible && o.polylines && o.polylines.length)
+          if (prev) closed = makeClipPolys(prev.polylines)
+        }
+        if (closed.length) {
+          const which = layer.params?.clipMode || 'all'
+          const idx2 = layer.params?.clipIndex || 0
+          const clips = pickClipPolys(closed, which, idx2)
+          if (clips && clips.length) {
+            const rule = layer.params?.clipRule || 'union'
+            poly = clipPolysToPolygonsWithRule(poly, clips, rule)
+          } else {
+            poly = []
+          }
+        }
+      }
       // Global output clipping to paper or margin (unless gen already respects bounds)
       if (docArg.clipOutput && docArg.clipOutput !== 'none' && !skipGlobalClip(layer.generator)) {
         const useMargin = docArg.clipOutput === 'margin'

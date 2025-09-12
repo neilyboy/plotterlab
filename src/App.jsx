@@ -46,6 +46,7 @@ import { deJong } from './lib/generators/deJong.js'
 import { reactionStrokes } from './lib/generators/reactionStrokes.js'
 import { clifford } from './lib/generators/clifford.js'
 import { sunflowerBands } from './lib/generators/sunflowerBands.js'
+import { combinator } from './lib/generators/combinator.js'
 import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
 
@@ -646,6 +647,17 @@ const GENERATORS = {
       bandPeriod: 7,
       bandDuty: 0.55,
       jitter: 0.15,
+      margin: 20,
+      simplifyTol: 0
+    }
+  },
+  combinator: {
+    name: 'Combinator',
+    fn: combinator,
+    params: {
+      srcA: '',
+      srcB: '',
+      op: 'intersect', // intersect | union | difference | xor
       margin: 20,
       simplifyTol: 0
     }
@@ -3254,6 +3266,41 @@ export default function App() {
                       )}
                     </div>
                   )}
+                  {layer.generator === 'combinator' && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Combinator Sources</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'comb')}>{isGroupOpen(layer.id,'comb')?'–':'+'}</button>
+                      </div>
+                      {isGroupOpen(layer.id,'comb') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <label className={labelClass}>Source A
+                            <Select value={layer.params.srcA || ''}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcA:v}}:l))}
+                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
+                            />
+                          </label>
+                          <label className={labelClass}>Source B
+                            <Select value={layer.params.srcB || ''}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcB:v}}:l))}
+                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
+                            />
+                          </label>
+                          <label className={labelClass}>Operation
+                            <Select value={layer.params.op || 'intersect'}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, op:v}}:l))}
+                              options={[
+                                { label:'Intersect', value:'intersect' },
+                                { label:'Union', value:'union' },
+                                { label:'Difference (A - B)', value:'difference' },
+                                { label:'XOR', value:'xor' }
+                              ]}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {Object.entries(GENERATORS[layer.generator].params).map(([k,def]) => {
                     // Skip clip UI keys we render via custom block for these generators
                     if ((layer.generator === 'hatchFill' || layer.generator === 'halftone' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
@@ -3290,6 +3337,9 @@ export default function App() {
                     )) return null
                     if (layer.generator === 'pixelMosaic' && (
                       ['cols','rows','density','jitter','levels','margin','simplifyTol'].includes(k)
+                    )) return null
+                    if (layer.generator === 'combinator' && (
+                      ['srcA','srcB','op'].includes(k)
                     )) return null
                     // Boolean controls
                     if (typeof def === 'boolean') {
@@ -3424,69 +3474,83 @@ export default function App() {
                       </label>
                     )
                   })}
-                  {(layer.generator === 'hatchFill' || layer.generator === 'halftone' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
-                    <div className="col-span-2 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      <label className={labelClass}>Clip To Layer
-                        <Select value={layer.params.clipLayerId || ''}
-                          onChange={(v)=>setLayers(ls=>ls.map(l=>{
-                            if (l.id!==layer.id) return l
-                            return { ...l, params: { ...l.params, clipLayerId: v, clipToPrevious: false } }
-                          }))}
-                          options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
-                        />
-                      </label>
-                      <label className={labelRowClass}>
-                        <input type="checkbox" className="w-4 h-4" checked={!!layer.params.clipToPrevious}
-                          disabled={!!layer.params.clipLayerId}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipToPrevious:e.target.checked}}:l))} />
-                        Or: Clip to previous visible layer
-                      </label>
-                      <label className={labelClass}>Clip Mode
-                        <Select value={layer.params.clipMode || 'all'}
-                          onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipMode:v}}:l))}
-                          options={[{label:'All polygons',value:'all'},{label:'Largest polygon',value:'largest'},{label:'# Index',value:'index'}]}
-                        />
-                      </label>
-                      <label className={labelClass}>Clip Index
-                        <input className="input" type="number" min="0" step="1" value={layer.params.clipIndex || 0}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipIndex:Math.max(0,Math.floor(+e.target.value||0))}}:l))} />
-                      </label>
-                      {(layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
-                        <label className={labelClass}>Clip Rule
-                          <Select value={layer.params.clipRule || 'union'}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipRule:v}}:l))}
-                            options={[
-                              {label:'Union (default)', value:'union'},
-                              {label:'Even-Odd', value:'evenodd'},
-                              {label:'Intersect', value:'intersect'},
-                              {label:'Difference (first - others)', value:'difference'},
-                            ]}
-                          />
-                        </label>
-                      )}
-                      <div className="col-span-2 flex gap-2">
-                        <button className="btn" onClick={()=>setPicker(p => (p.active && p.targetLayerId === layer.id) ? { active: false, targetLayerId: null } : { active: true, targetLayerId: layer.id })}>
-                          {picker.active && picker.targetLayerId === layer.id
-                            ? (compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Picking</>))
-                            : (compactUI ? (<><Icon path={mdiVectorSelection}/> Pick</>) : (<><Icon path={mdiVectorSelection}/> Pick shape on canvas</>))}
-                        </button>
-                        {layer.generator === 'svgImport' && (
-                          <>
-                            {!transform.active || transform.layerId !== layer.id ? (
-                              <button className="btn" onClick={()=>setTransform({ active: true, layerId: layer.id })}>
-                                {compactUI ? (<><Icon path={mdiVectorSquare}/> Transform</>) : (<><Icon path={mdiVectorSquare}/> Transform on canvas</>)}
-                              </button>
-                            ) : (
-                              <button className="btn" onClick={()=>setTransform({ active: false, layerId: null })}>
-                                {compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Transform</>)}
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {picker.active && picker.targetLayerId === layer.id && (
-                          <span className="text-xs opacity-80 self-center">Click inside a shape to set Clip Layer + Index</span>
-                        )}
+                  {(
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs opacity-80">Pattern Fill</span>
+                        <button className="icon" onClick={()=>toggleGroup(layer.id,'fill')}>{isGroupOpen(layer.id,'fill')?'–':'+'}</button>
                       </div>
+                      {isGroupOpen(layer.id,'fill') && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          <label className={labelRowClass}>
+                            <input type="checkbox" className="w-4 h-4" checked={layer.params.clipEnabled !== false}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, clipEnabled: e.target.checked}}:l))} />
+                            Enable Fill
+                          </label>
+                          <label className={labelClass}>Fill From Layer
+                            <Select value={layer.params.clipLayerId || ''}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>{
+                                if (l.id!==layer.id) return l
+                                return { ...l, params: { ...l.params, clipLayerId: v, clipToPrevious: false } }
+                              }))}
+                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
+                            />
+                          </label>
+                          <label className={labelRowClass}>
+                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.clipToPrevious}
+                              disabled={!!layer.params.clipLayerId}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipToPrevious:e.target.checked}}:l))} />
+                            Or: Use previous visible layer
+                          </label>
+                          <label className={labelClass}>Clip Mode
+                            <Select value={layer.params.clipMode || 'all'}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipMode:v}}:l))}
+                              options={[{label:'All polygons',value:'all'},{label:'Largest polygon',value:'largest'},{label:'# Index',value:'index'}]}
+                            />
+                          </label>
+                          <label className={labelClass}>Clip Index
+                            <input className="input" type="number" min="0" step="1" value={layer.params.clipIndex || 0}
+                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipIndex:Math.max(0,Math.floor(+e.target.value||0))}}:l))} />
+                          </label>
+                          <label className={labelClass}>Clip Rule
+                            <Select value={layer.params.clipRule || 'union'}
+                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipRule:v}}:l))}
+                              options={[
+                                {label:'Union (default)', value:'union'},
+                                {label:'Even-Odd', value:'evenodd'},
+                                ...((layer.generator==='hatchFill'||layer.generator==='mdiPattern'||layer.generator==='svgImport')
+                                  ? [
+                                      {label:'Intersect', value:'intersect'},
+                                      {label:'Difference (first - others)', value:'difference'}
+                                    ] : [])
+                              ]}
+                            />
+                          </label>
+                          <div className="col-span-2 flex gap-2">
+                            <button className="btn" onClick={()=>setPicker(p => (p.active && p.targetLayerId === layer.id) ? { active: false, targetLayerId: null } : { active: true, targetLayerId: layer.id })}>
+                              {picker.active && picker.targetLayerId === layer.id
+                                ? (compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Picking</>))
+                                : (compactUI ? (<><Icon path={mdiVectorSelection}/> Pick</>) : (<><Icon path={mdiVectorSelection}/> Pick shape on canvas</>))}
+                            </button>
+                            {layer.generator === 'svgImport' && (
+                              <>
+                                {!transform.active || transform.layerId !== layer.id ? (
+                                  <button className="btn" onClick={()=>setTransform({ active: true, layerId: layer.id })}>
+                                    {compactUI ? (<><Icon path={mdiVectorSquare}/> Transform</>) : (<><Icon path={mdiVectorSquare}/> Transform on canvas</>)}
+                                  </button>
+                                ) : (
+                                  <button className="btn" onClick={()=>setTransform({ active: false, layerId: null })}>
+                                    {compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Transform</>)}
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {picker.active && picker.targetLayerId === layer.id && (
+                              <span className="text-xs opacity-80 self-center">Click inside a shape to set Clip Layer + Index</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   {layer.generator === 'hatchFill' && (layer.params.clipMode || 'all') === 'index' && (

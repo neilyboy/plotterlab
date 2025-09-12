@@ -19,4 +19,11 @@
   { "label": "Radial Orbitals", "file": "radial_orbitals.json" },
   { "label": "Reaction Strokes", "file": "reaction_strokes_default.json" },
   { "label": "Sunflower Bands CMY", "file": "sunflower_bands_cmyk.json" }
+  , { "label": "Poisson Stipple Ribbon", "file": "poisson_stipple_ribbon.json" }
+  , { "label": "Contours → Path Warp", "file": "contours_path_warp.json" }
+  , { "label": "Hilbert → Path Warp", "file": "hilbert_path_warp.json" }
+  , { "label": "Contours → Fill Bands", "file": "contours_fill_bands.json" }
+  , { "label": "Combinator (A ∩ B) → Bands", "file": "combinator_fill_bands.json" }
+  , { "label": "Combinator (A − B) → Hatch", "file": "combinator_diff_hatch.json" }
+  , { "label": "Combinator (A ⊕ B) → Stipple", "file": "combinator_xor_stipple.json" }
 ]

@@ -9,7 +9,7 @@ A modern, dark-themed web app for creating multi-layer generative SVG artwork an
 
 - Frontend: React + Vite + Tailwind
 - Backend: Express (serves built assets)
-- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands, L‑system, Phyllotaxis, Truchet Tiles, Hilbert Curve, Path Warp (link another layer), Image Contours (Marching Squares), Poisson Stipple, TSP Art, Harmonograph, De Jong Attractor, Maze, Reaction Strokes, Clifford Attractor, Sunflower Bands
+- Generators included: Spirograph, Star Lattice, Flow Field, Retro Pipes, Isometric City, Voronoi Shatter, MDI Pattern, MDI Icon Field, SVG Import, Hatch Fill, Halftone / Dither, Pixel Mosaic, Iso Contours, Superformula Rings, Wave Moiré, Streamlines, Reaction Contours, Quasicrystal Contours, Stripe Bands, L‑system, Phyllotaxis, Truchet Tiles, Hilbert Curve, Path Warp (link another layer), Image Contours (Marching Squares), Poisson Stipple, TSP Art, Harmonograph, De Jong Attractor, Maze, Reaction Strokes, Clifford Attractor, Sunflower Bands, Combinator
 - Exports: ZIP of per-layer SVGs; G-code export modes (single combined file, per-layer ZIP, per-color ZIP)
 - Docker: Multi-stage image for easy hosting on Ubuntu
 
@@ -340,9 +340,14 @@ Open: http://localhost:8080 (or your server IP)
   - Params: `count`, `spacing`, `angleDeg`, `dotSize`, `bandPeriod`, `bandDuty`, `jitter`.
   - Tip: Layer multiple colors with slight `bandPeriod`/`bandDuty` offsets for vibrant NES‑tube vibes.
 
+- __Combinator__
+  - Boolean-style combination of two source shape layers (A, B). Produces boundary polylines of Intersect/Union/Difference/XOR.
+  - Params: `srcA`, `srcB`, `op`.
+  - Tip: Use with `Hatch Fill`, `Stripe Bands`, etc., by setting their Clip to the Combinator result or vice versa.
+
 ## 👆 On‑Canvas Picker (Clip to Polygon)
 
-For `Hatch Fill`, `Halftone`, `MDI Pattern`, and `SVG Import` layers:
+For most generators (including Hatch/MDI/SVG Import and many others via generic clipping):
 
 1) Click the button: “Pick shape on canvas”.
 2) Cursor becomes a crosshair and a hint appears.
@@ -355,6 +360,8 @@ The app will set:
 - `clipIndex` → polygon index you clicked
 
 Tip: When “Clip Mode = index”, the preview displays small labels at polygon centroids so you can dial in indices manually if you prefer.
+
+Note: A generic clipping step now applies to many generators that do not natively support clipping. You can set `Clip To Layer` or use `Clip to previous visible layer` to restrict outputs to shapes. Hatch/MDI/SVG Import retain advanced `Clip Rule` options (Union/Even‑Odd/Intersect/Difference). A dedicated “Fill Layers” UX is planned to streamline pattern‑fill workflows.
 
 ## 🛠️ On‑Canvas Transform (SVG Import)
 

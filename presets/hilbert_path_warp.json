@@ -1,0 +1,44 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 1.0,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Hilbert",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "hilbert",
+      "params": {
+        "order": 6,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l2",
+      "name": "Path Warp",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "pathWarp",
+      "params": {
+        "srcToPrevious": true,
+        "amp": 3.0,
+        "scale": 0.02,
+        "step": 1.2,
+        "copies": 1,
+        "rotateFlow": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

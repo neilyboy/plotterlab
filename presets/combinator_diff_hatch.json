@@ -1,0 +1,81 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 1.0,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "SVG Import A",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "svgImport",
+      "params": {
+        "svgText": "<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><path d='M10,50 Q210,10 410,120 610,190 410,210 210,230 10,50Z' fill='none' stroke='black'/></svg>",
+        "offsetX": 0,
+        "offsetY": 0,
+        "scale": 1,
+        "rotateDeg": 0,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l2",
+      "name": "SVG Import B",
+      "color": "#f472b6",
+      "visible": true,
+      "generator": "svgImport",
+      "params": {
+        "svgText": "<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='210' cy='148' r='120' fill='none' stroke='black'/></svg>",
+        "offsetX": 0,
+        "offsetY": 0,
+        "scale": 1,
+        "rotateDeg": 0,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l3",
+      "name": "Combinator (A − B)",
+      "color": "#2dd4bf",
+      "visible": true,
+      "generator": "combinator",
+      "params": {
+        "srcA": "l1",
+        "srcB": "l2",
+        "op": "difference",
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "l4",
+      "name": "Hatch Fill",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "hatchFill",
+      "params": {
+        "angleDeg": 45,
+        "spacing": 4.5,
+        "offset": 0,
+        "cross": true,
+        "crossOffset": 0,
+        "clipEnabled": true,
+        "clipLayerId": "l3",
+        "clipMode": "all",
+        "clipRule": "union",
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

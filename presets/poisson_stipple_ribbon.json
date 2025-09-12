@@ -1,0 +1,29 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Poisson Ribbon",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "poissonStipple",
+      "params": {
+        "minDist": 4.8,
+        "attempts": 12000,
+        "connectPath": true,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}
