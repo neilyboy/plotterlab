@@ -1071,24 +1071,18 @@ export default function App() {
   const toggleClipIndexForLayer = (targetLayerId, srcId, idx, additive) => {
     setLayers(ls => ls.map(l => {
       if (l.id !== targetLayerId) return l
-      const isHatch = l.generator === 'hatchFill'
       const next = { ...l, params: { ...l.params, clipLayerId: srcId, clipMode: 'index', clipToPrevious: false } }
-      if (isHatch) {
-        const cur = Array.isArray(next.params.clipIndices) ? next.params.clipIndices.slice() : (Number.isFinite(next.params.clipIndex) ? [Math.max(0, Math.floor(next.params.clipIndex))] : [])
-        const i = Math.max(0, Math.floor(idx))
-        if (additive) {
-          const pos = cur.indexOf(i)
-          if (pos >= 0) cur.splice(pos, 1)
-          else cur.push(i)
-        } else {
-          cur.length = 0; cur.push(i)
-        }
-        delete next.params.clipIndex
-        next.params.clipIndices = cur
+      const cur = Array.isArray(next.params.clipIndices) ? next.params.clipIndices.slice() : (Number.isFinite(next.params.clipIndex) ? [Math.max(0, Math.floor(next.params.clipIndex))] : [])
+      const i = Math.max(0, Math.floor(idx))
+      if (additive) {
+        const pos = cur.indexOf(i)
+        if (pos >= 0) cur.splice(pos, 1)
+        else cur.push(i)
       } else {
-        next.params.clipIndex = Math.max(0, Math.floor(idx))
-        delete next.params.clipIndices
+        cur.length = 0; cur.push(i)
       }
+      delete next.params.clipIndex
+      next.params.clipIndices = cur
       return next
     }))
   }
@@ -1167,30 +1161,24 @@ export default function App() {
             }
           }
           if (found) {
-            // For Hatch Fill: support multi-select (Shift toggles), using clipIndices array
+            // For any generator: support multi-select (Shift toggles), using clipIndices array
             setLayers(ls => ls.map(l => {
               if (l.id !== target.id) return l
-              const isHatch = l.generator === 'hatchFill'
               const next = { ...l, params: { ...l.params, clipLayerId: found.srcId, clipMode: 'index', clipToPrevious: false } }
-              if (isHatch) {
-                const cur = Array.isArray(next.params.clipIndices) ? next.params.clipIndices.slice() : (Number.isFinite(next.params.clipIndex) ? [Math.max(0, Math.floor(next.params.clipIndex))] : [])
-                const idx = Math.max(0, Math.floor(found.idx))
-                if (e.shiftKey) {
-                  const pos = cur.indexOf(idx)
-                  if (pos >= 0) {
-                    cur.splice(pos, 1)
-                  } else {
-                    cur.push(idx)
-                  }
+              const cur = Array.isArray(next.params.clipIndices) ? next.params.clipIndices.slice() : (Number.isFinite(next.params.clipIndex) ? [Math.max(0, Math.floor(next.params.clipIndex))] : [])
+              const idx = Math.max(0, Math.floor(found.idx))
+              if (e.shiftKey) {
+                const pos = cur.indexOf(idx)
+                if (pos >= 0) {
+                  cur.splice(pos, 1)
                 } else {
-                  cur.length = 0; cur.push(idx)
+                  cur.push(idx)
                 }
-                delete next.params.clipIndex
-                next.params.clipIndices = cur
               } else {
-                next.params.clipIndex = Math.max(0, Math.floor(found.idx))
-                delete next.params.clipIndices
+                cur.length = 0; cur.push(idx)
               }
+              delete next.params.clipIndex
+              next.params.clipIndices = cur
               return next
             }))
           }
@@ -3583,13 +3571,22 @@ export default function App() {
                         </button>
                       </div>
                       <label className={labelClass}>Clip Indices (CSV)
-                        <input className="input" type="text" value={(numEdit[`L:${layer.id}:clipCsv`] ?? (Array.isArray(layer.params.clipIndices)? layer.params.clipIndices.join(',') : ''))}
+                        <input className="input" type="text" value={(numEdit[`L:${layer.id}:clipCsv`] ?? (
+                            Array.isArray(layer.params.clipIndices)
+                              ? layer.params.clipIndices.join(',')
+                              : (Number.isFinite(layer.params.clipIndex) ? String(layer.params.clipIndex) : '')
+                          ))}
                           onChange={(e)=>{
                             const txt = e.target.value
                             setNumEdit(m=>({ ...m, [`L:${layer.id}:clipCsv`]: txt }))
                             const parts = String(txt).split(/[;\,\s]+/).filter(Boolean)
                             const arr = Array.from(new Set(parts.map(t=>Math.max(0, Math.floor(+t||0))).filter(n=>Number.isFinite(n))))
-                            setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipIndices:arr}}:l))
+                            setLayers(ls=>ls.map(l=>{
+                              if (l.id!==layer.id) return l
+                              const nextParams = { ...l.params, clipIndices: arr }
+                              delete nextParams.clipIndex
+                              return { ...l, params: nextParams }
+                            }))
                           }}
                           onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n[`L:${layer.id}:clipCsv`]; return n })}
                         />
