@@ -122,6 +122,45 @@ function nearestImprove(polys, startX, startY) {
   return r
 }
 
+// Join polylines that are close together.
+// This assumes polylines are already ordered by a method like nearestNeighbor.
+export function joinPolylines(polylines, tolerance = 0.1) {
+  if (polylines.length < 2) {
+    return polylines.map(p => p.slice());
+  }
+  const tol2 = tolerance * tolerance;
+  const out = [];
+  let currentPoly = polylines[0].slice();
+
+  for (let i = 1; i < polylines.length; i++) {
+    const nextPoly = polylines[i];
+    if (currentPoly.length === 0 || nextPoly.length === 0) {
+      if (currentPoly.length > 0) {
+        out.push(currentPoly);
+      }
+      currentPoly = nextPoly.slice();
+      continue;
+    }
+
+    const endOfCurrent = currentPoly[currentPoly.length - 1];
+    const startOfNext = nextPoly[0];
+
+    if (dist2(endOfCurrent, startOfNext) < tol2) {
+      // Using concat instead of spread for potentially better performance with large arrays
+      currentPoly = currentPoly.concat(nextPoly.slice(1));
+    } else {
+      out.push(currentPoly);
+      currentPoly = nextPoly.slice();
+    }
+  }
+
+  if (currentPoly.length > 0) {
+    out.push(currentPoly);
+  }
+
+  return out;
+}
+
 export function orderPolylines(polylines, method = 'none', startX = 0, startY = 0) {
   if (method === 'none') return polylines.map(p => p.slice())
   if (method === 'improve' || method === 'nearest+improve') return nearestImprove(polylines, startX, startY)
