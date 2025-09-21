@@ -803,6 +803,9 @@ export default function App() {
   // Keyboard/interaction helpers
   const [spaceDown, setSpaceDown] = useState(false)
   const [isPanning, setIsPanning] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveProgress, setSaveProgress] = useState(0)
+  const [saveMessage, setSaveMessage] = useState('')
   const [showHelp, setShowHelp] = useState(() => {
     try { return JSON.parse(localStorage.getItem('plotterlab:showHelp')) || false } catch { return false }
   })
@@ -1495,12 +1498,16 @@ export default function App() {
     return () => ro.disconnect()
   }, [stageRef, doc.previewAutoFit])
   const exportPreset = () => {
+    setSaveMessage('Saving preset...');
+    setIsSaving(true);
     try {
       const preset = { doc, layers }
       const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' })
       saveAs(blob, `preset_${doc.seed}.json`)
     } catch (e) {
       console.error('Export preset failed', e)
+    } finally {
+      setIsSaving(false)
     }
   }
   const openImport = () => fileRef.current?.click()
@@ -1943,6 +1950,17 @@ export default function App() {
     return `${minX} ${minY} ${vw} ${vh}`
   }, [doc.width, doc.height, doc.previewZoom, doc.previewPanX, doc.previewPanY])
 
+  const finalPolylinesForStats = useMemo(() => {
+    if (previewRunning) return []
+    const all = rendered.flatMap(r => r.layer.visible ? r.polylines : [])
+    if (all.length === 0) return []
+    let polys = orderPolylines(all, doc.optimize, doc.startX, doc.startY)
+    if (doc.optimizeJoin) {
+      polys = joinPolylines(polys)
+    }
+    return polys
+  }, [rendered, doc.optimize, doc.optimizeJoin, doc.startX, doc.startY, previewRunning])
+
   const overlayOrder = useMemo(() => {
     // Only compute heavy ordering when strictly needed and when preview is idle
     if (!(doc.showOrderNumbers || doc.showTravel)) return []
@@ -2199,16 +2217,19 @@ export default function App() {
 
   // Plot length/time estimator
   const lengthEstimate = useMemo(() => {
-    if (!doc.showToolpathControls || previewRunning) {
-      return { drawLen: 0, travelLen: 0, totalLen: 0, drawMin: 0, travelMin: 0, totalMin: 0, fmt: (m)=>{
-        if (!Number.isFinite(m)) return '-'
-        const s = Math.round(m * 60)
-        const h = Math.floor(s / 3600)
-        const mm = Math.floor((s % 3600) / 60)
-        const ss = s % 60
-        return h > 0 ? `${h}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${mm}:${String(ss).padStart(2,'0')}`
-      } }
+    const fmt = (m) => {
+      if (!Number.isFinite(m)) return '-'
+      const s = Math.round(m * 60)
+      const h = Math.floor(s / 3600)
+      const mm = Math.floor((s % 3600) / 60)
+      const ss = s % 60
+      return h > 0 ? `${h}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${mm}:${String(ss).padStart(2,'0')}`
     }
+    if (!doc.showToolpathControls || previewRunning) {
+      return { drawLen: 0, travelLen: 0, totalLen: 0, drawMin: 0, travelMin: 0, totalMin: 0, penLifts: 0, fmt }
+    }
+    const polys = finalPolylinesForStats
+    const penLifts = polys.length
     const lenPolyline = (p) => {
       let L = 0
       for (let i = 0; i < p.length - 1; i++) {
@@ -2217,11 +2238,14 @@ export default function App() {
       }
       return L
     }
-    const drawLen = overlayOrder.reduce((acc, p) => acc + (p.length > 1 ? lenPolyline(p) : 0), 0)
+    const drawLen = polys.reduce((acc, p) => acc + (p.length > 1 ? lenPolyline(p) : 0), 0)
     let travelLen = 0
-    for (let i = 0; i < overlayOrder.length - 1; i++) {
-      const cur = overlayOrder[i]
-      const nxt = overlayOrder[i+1]
+    if (polys.length > 1) {
+      travelLen += Math.hypot(polys[0][0][0] - doc.startX, polys[0][0][1] - doc.startY)
+    }
+    for (let i = 0; i < polys.length - 1; i++) {
+      const cur = polys[i]
+      const nxt = polys[i+1]
       if (!cur.length || !nxt.length) continue
       const a = cur[cur.length - 1]
       const b = nxt[0]
@@ -2232,24 +2256,151 @@ export default function App() {
     const drawMin = drawLen / feed
     const travelMin = travelLen / travel
     const totalMin = drawMin + travelMin
-    const fmt = (m) => {
-      if (!Number.isFinite(m)) return '-'
-      const s = Math.round(m * 60)
-      const h = Math.floor(s / 3600)
-      const mm = Math.floor((s % 3600) / 60)
-      const ss = s % 60
-      return h > 0 ? `${h}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${mm}:${String(ss).padStart(2,'0')}`
-    }
-    return { drawLen, travelLen, totalLen: drawLen + travelLen, drawMin, travelMin, totalMin, fmt }
-  }, [overlayOrder, doc.feed, doc.travel, doc.showToolpathControls, previewRunning])
+    return { drawLen, travelLen, totalLen: drawLen + travelLen, drawMin, travelMin, totalMin, penLifts, fmt }
+  }, [finalPolylinesForStats, doc.feed, doc.travel, doc.startX, doc.startY, doc.showToolpathControls, previewRunning])
 
   const downloadSVGs = async () => {
-    // Use full quality for export
-    const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
-    const zip = new JSZip()
-    full.forEach(({ layer, polylines }, idx) => {
-      if (!layer.visible) return
-      let polys = polylines
+    setSaveMessage('Zipping SVGs...');
+    setIsSaving(true);
+    setSaveProgress(0);
+    try {
+      // Use full quality for export
+      const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
+      const zip = new JSZip()
+      full.forEach(({ layer, polylines }, idx) => {
+        if (!layer.visible) return
+        let polys = polylines
+        if (doc.optimize !== 'none') {
+          polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+        }
+        if (doc.optimizeJoin) {
+          polys = joinPolylines(polys)
+        }
+        const d = polys.map(polylineToPath).join(' ')
+        const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: layer.color, strokeWidth: doc.strokeWidth }] })
+        zip.file(`${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.svg`, svg)
+      })
+      const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        setSaveProgress(metadata.percent);
+      })
+      setSaveMessage('Saving file...');
+      saveAs(blob, `plotter_layers_${doc.seed}.zip`)
+    } catch (e) {
+      console.error('SVG export failed', e)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const downloadGcode = async () => {
+    setSaveMessage('Preparing G-code...');
+    setIsSaving(true);
+    setSaveProgress(0);
+    try {
+      // Regenerate at full quality for export
+      const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
+      const opts = {
+        width: doc.width,
+        height: doc.height,
+        feed: doc.feed,
+        travel: doc.travel,
+        scale: 1,
+        penUp: doc.penUp,
+        penDown: doc.penDown,
+        safeZ: doc.safeZ,
+        penMode: doc.penMode,
+        servoUp: doc.servoUp,
+        servoDown: doc.servoDown,
+        delayAfterUp: doc.delayAfterUp,
+        delayAfterDown: doc.delayAfterDown,
+        originX: Number(doc.originX) || 0,
+        originY: Number(doc.originY) || 0
+      }
+
+      if (doc.exportMode === 'combined') {
+        setSaveMessage('Generating G-code...');
+        const parts = []
+        let first = true
+        const visibleLayers = full.filter(r => r.layer.visible && r.polylines.length > 0)
+        visibleLayers.forEach((entry, idx) => {
+          const { layer, polylines } = entry
+          let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+          if (doc.optimizeJoin) {
+            ordered = joinPolylines(ordered)
+          }
+          const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY, includeHeader: first, includeFooter: idx === visibleLayers.length - 1 })
+          parts.push(`; --- Layer ${idx + 1}: ${layer.name} (${layer.color}) ---`)
+          parts.push(g)
+          if (doc.pauseCombined && idx < visibleLayers.length - 1) {
+            const msg = (doc.pauseMessage || 'Change pen to <color>').replace('<color>', layer.color)
+            const code = doc.pauseCode || 'M0'
+            parts.push(`${code} ; ${msg}`)
+          }
+          first = false
+        })
+        const combined = parts.join('\n')
+        const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' })
+        setSaveMessage('Saving file...');
+        saveAs(blob, `plotter_${doc.seed}.gcode`)
+        return
+      }
+
+      const zip = new JSZip()
+      if (doc.exportMode === 'layers') {
+        setSaveMessage('Generating layers...');
+        full.forEach(({ layer, polylines }, idx) => {
+          if (!layer.visible || polylines.length === 0) return
+          let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+          if (doc.optimizeJoin) {
+            ordered = joinPolylines(ordered)
+          }
+          const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
+          const name = `${String(idx + 1).padStart(2, '0')}-${layer.name.replace(/\s+/g, '_')}.gcode`
+          zip.file(name, g)
+        })
+      }
+
+      if (doc.exportMode === 'colors') {
+        setSaveMessage('Generating colors...');
+        const byColor = new Map()
+        full.forEach(({ layer, polylines }) => {
+          if (!layer.visible || polylines.length === 0) return
+          const key = layer.color
+          if (!byColor.has(key)) byColor.set(key, [])
+          byColor.get(key).push(...polylines)
+        })
+        Array.from(byColor.entries()).forEach(([color, polys]) => {
+          let ordered = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+          if (doc.optimizeJoin) {
+            ordered = joinPolylines(ordered)
+          }
+          const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
+          const name = `${color.replace('#', '')}.gcode`
+          zip.file(name, g)
+        })
+      }
+
+      setSaveMessage('Zipping G-code...');
+      const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        setSaveProgress(metadata.percent)
+      })
+      setSaveMessage('Saving file...');
+      saveAs(blob, `gcode_${doc.seed}.zip`)
+    } catch (e) {
+      console.error('G-code export failed', e)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const downloadLayerSvg = (layerId) => {
+    setSaveMessage('Saving SVG...');
+    setIsSaving(true);
+    try {
+      const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
+      const entry = full.find(e => e.layer.id === layerId)
+      if (!entry) return
+      let polys = entry.polylines
       if (doc.optimize !== 'none') {
         polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
       }
@@ -2257,116 +2408,14 @@ export default function App() {
         polys = joinPolylines(polys)
       }
       const d = polys.map(polylineToPath).join(' ')
-      const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: layer.color, strokeWidth: doc.strokeWidth }] })
-      zip.file(`${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.svg`, svg)
-    })
-    const blob = await zip.generateAsync({type: 'blob'})
-    saveAs(blob, `plotter_layers_${doc.seed}.zip`)
-  }
-
-  const downloadGcode = async () => {
-    // Regenerate at full quality for export
-    const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
-    const allPolys = full.flatMap(r => r.layer.visible ? r.polylines : [])
-    const opts = {
-      width: doc.width,
-      height: doc.height,
-      feed: doc.feed,
-      travel: doc.travel,
-      scale: 1,
-      penUp: doc.penUp,
-      penDown: doc.penDown,
-      safeZ: doc.safeZ,
-      penMode: doc.penMode,
-      servoUp: doc.servoUp,
-      servoDown: doc.servoDown,
-      delayAfterUp: doc.delayAfterUp,
-      delayAfterDown: doc.delayAfterDown,
-      originX: Number(doc.originX)||0,
-      originY: Number(doc.originY)||0
+      const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: entry.layer.color, strokeWidth: doc.strokeWidth }] })
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+      saveAs(blob, `${entry.layer.name.replace(/\s+/g,'_')}.svg`)
+    } catch (e) {
+      console.error('SVG export failed', e)
+    } finally {
+      setIsSaving(false)
     }
-
-    if (doc.exportMode === 'combined') {
-      // Concatenate layers; optional pause between
-      const parts = []
-      let first = true
-      const visibleLayers = full.filter(r => r.layer.visible && r.polylines.length > 0)
-      visibleLayers.forEach((entry, idx) => {
-        const { layer, polylines } = entry
-        let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
-        if (doc.optimizeJoin) {
-          ordered = joinPolylines(ordered)
-        }
-        const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY, includeHeader: first, includeFooter: idx === visibleLayers.length - 1 })
-        parts.push(`; --- Layer ${idx+1}: ${layer.name} (${layer.color}) ---`)
-        parts.push(g)
-        if (doc.pauseCombined && idx < visibleLayers.length - 1) {
-          const msg = (doc.pauseMessage || 'Change pen to <color>').replace('<color>', layer.color)
-          const code = doc.pauseCode || 'M0'
-          parts.push(`${code} ; ${msg}`)
-        }
-        first = false
-      })
-      const combined = parts.join('\n')
-      const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' })
-      saveAs(blob, `plotter_${doc.seed}.gcode`)
-      return
-    }
-
-    const zip = new JSZip()
-    if (doc.exportMode === 'layers') {
-      // one file per visible layer
-      full.forEach(({ layer, polylines }, idx) => {
-        if (!layer.visible || polylines.length === 0) return
-        let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
-        if (doc.optimizeJoin) {
-          ordered = joinPolylines(ordered)
-        }
-        const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
-        const name = `${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.gcode`
-        zip.file(name, g)
-      })
-    }
-
-    if (doc.exportMode === 'colors') {
-      // group polylines by color across layers
-      const byColor = new Map()
-      full.forEach(({ layer, polylines }) => {
-        if (!layer.visible || polylines.length === 0) return
-        const key = layer.color
-        if (!byColor.has(key)) byColor.set(key, [])
-        byColor.get(key).push(...polylines)
-      })
-      Array.from(byColor.entries()).forEach(([color, polys]) => {
-        let ordered = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-        if (doc.optimizeJoin) {
-          ordered = joinPolylines(ordered)
-        }
-        const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
-        const name = `${color.replace('#','')}.gcode`
-        zip.file(name, g)
-      })
-    }
-
-    const blob = await zip.generateAsync({ type: 'blob' })
-    saveAs(blob, `gcode_${doc.seed}.zip`)
-  }
-
-  const downloadLayerSvg = (layerId) => {
-    const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
-    const entry = full.find(e => e.layer.id === layerId)
-    if (!entry) return
-    let polys = entry.polylines
-    if (doc.optimize !== 'none') {
-      polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-    }
-    if (doc.optimizeJoin) {
-      polys = joinPolylines(polys)
-    }
-    const d = polys.map(polylineToPath).join(' ')
-    const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: entry.layer.color, strokeWidth: doc.strokeWidth }] })
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-    saveAs(blob, `${entry.layer.name.replace(/\s+/g,'_')}.svg`)
   }
 
   // Fit-to-content utilities
@@ -3830,6 +3879,13 @@ export default function App() {
               <button className="btn" title="Cancel preview rendering" onClick={cancelPreview}><Icon path={mdiClose}/> {compactUI? null : 'Cancel'}</button>
             </div>
           )}
+          {isSaving && (
+            <div className="absolute top-2 left-2 z-20 bg-black/65 backdrop-blur rounded-md px-2 py-1 flex items-center gap-2 text-xs border border-white/10">
+              <span className="px-2 py-0.5 rounded bg-white/10">
+                {saveMessage || 'Saving...'} {saveProgress > 0 && `${Math.floor(saveProgress)}%`}
+              </span>
+            </div>
+          )}
           <svg ref={svgRef} className="w-full h-full block" viewBox={viewBox}
             onMouseDown={onMouseDownPreview}>
             <rect x="0" y="0" width={doc.width} height={doc.height} fill={doc.bg} />
@@ -4071,6 +4127,10 @@ export default function App() {
             <div>
               <div className="text-xs opacity-70">Total Length</div>
               <div className="font-medium">{lengthEstimate.totalLen.toFixed(0)} mm</div>
+            </div>
+            <div>
+              <div className="text-xs opacity-70">Pen Lifts</div>
+              <div className="font-medium">{lengthEstimate.penLifts}</div>
             </div>
             <div className="ml-auto">
               <div className="text-xs opacity-70">Estimated Time</div>
