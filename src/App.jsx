@@ -21,7 +21,7 @@ import { pixelMosaic } from './lib/generators/pixelMosaic.js'
 import { halftone } from './lib/generators/halftone.js'
 import { fileToGrayscale, fileToRGB } from './lib/imageLoad.js'
 import { mdiIconField } from './lib/generators/mdiIconField.js'
-import { orderPolylines } from './lib/pathopt.js'
+import { orderPolylines, joinPolylines } from './lib/pathopt.js'
 import { simplifyPolylines } from './lib/simplify.js'
 import { useDebouncedValue } from './lib/useDebounced.js'
 import { isoContours } from './lib/generators/isoContours.js'
@@ -747,6 +747,7 @@ const defaultDoc = {
   originX: 0,
   originY: 0,
   optimize: 'nearest', // 'none' | 'nearest'
+  optimizeJoin: true, // join contiguous paths
   penUp: 5,
   penDown: 0,
   safeZ: 5,
@@ -1878,7 +1879,8 @@ export default function App() {
       doc: dDoc,
       mdiCache,
       bitmaps,
-      quality: effQual
+      quality: effQual,
+      optimizeJoin: doc.optimizeJoin
     })
     // Arm watchdog in case no progress arrives at all
     lastProgressAtRef.current = Date.now()
@@ -2247,7 +2249,14 @@ export default function App() {
     const zip = new JSZip()
     full.forEach(({ layer, polylines }, idx) => {
       if (!layer.visible) return
-      const d = polylines.map(polylineToPath).join(' ')
+      let polys = polylines
+      if (doc.optimize !== 'none') {
+        polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+      }
+      if (doc.optimizeJoin) {
+        polys = joinPolylines(polys)
+      }
+      const d = polys.map(polylineToPath).join(' ')
       const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: layer.color, strokeWidth: doc.strokeWidth }] })
       zip.file(`${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.svg`, svg)
     })
@@ -2284,7 +2293,10 @@ export default function App() {
       const visibleLayers = full.filter(r => r.layer.visible && r.polylines.length > 0)
       visibleLayers.forEach((entry, idx) => {
         const { layer, polylines } = entry
-        const ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+        let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+        if (doc.optimizeJoin) {
+          ordered = joinPolylines(ordered)
+        }
         const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY, includeHeader: first, includeFooter: idx === visibleLayers.length - 1 })
         parts.push(`; --- Layer ${idx+1}: ${layer.name} (${layer.color}) ---`)
         parts.push(g)
@@ -2306,7 +2318,10 @@ export default function App() {
       // one file per visible layer
       full.forEach(({ layer, polylines }, idx) => {
         if (!layer.visible || polylines.length === 0) return
-        const ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+        let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
+        if (doc.optimizeJoin) {
+          ordered = joinPolylines(ordered)
+        }
         const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
         const name = `${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.gcode`
         zip.file(name, g)
@@ -2323,7 +2338,10 @@ export default function App() {
         byColor.get(key).push(...polylines)
       })
       Array.from(byColor.entries()).forEach(([color, polys]) => {
-        const ordered = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+        let ordered = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+        if (doc.optimizeJoin) {
+          ordered = joinPolylines(ordered)
+        }
         const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
         const name = `${color.replace('#','')}.gcode`
         zip.file(name, g)
@@ -2338,7 +2356,14 @@ export default function App() {
     const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
     const entry = full.find(e => e.layer.id === layerId)
     if (!entry) return
-    const d = entry.polylines.map(polylineToPath).join(' ')
+    let polys = entry.polylines
+    if (doc.optimize !== 'none') {
+      polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
+    }
+    if (doc.optimizeJoin) {
+      polys = joinPolylines(polys)
+    }
+    const d = polys.map(polylineToPath).join(' ')
     const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: entry.layer.color, strokeWidth: doc.strokeWidth }] })
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
     saveAs(blob, `${entry.layer.name.replace(/\s+/g,'_')}.svg`)
@@ -3984,6 +4009,10 @@ export default function App() {
           <label className="flex flex-col gap-1">Optimize
             <Select value={doc.optimize} onChange={v=>setDoc(d=>({...d,optimize:v}))}
               options={[{label:'Nearest Neighbor', value:'nearest'},{label:'Nearest + Improve', value:'nearest+improve'},{label:'Off', value:'none'}]}/>
+          </label>
+          <label className="flex items-center gap-2" title="Merge adjacent paths into a single continuous line to reduce pen-up/down movements.">
+            <input type="checkbox" className="w-4 h-4" checked={!!doc.optimizeJoin} onChange={e=>setDoc(d=>({...d,optimizeJoin:e.target.checked}))}/>
+            Join Paths
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" className="w-4 h-4" checked={!!doc.showOrderNumbers} onChange={e=>setDoc(d=>({...d,showOrderNumbers:e.target.checked}))}/>
