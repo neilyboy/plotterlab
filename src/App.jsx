@@ -4,6 +4,7 @@ import JSZip from 'jszip'
 import { mdiContentSave, mdiPlus, mdiDelete, mdiEye, mdiEyeOff, mdiDownload, mdiShuffleVariant, mdiArrowUp, mdiArrowDown, mdiCrosshairsGps, mdiDotsVertical, mdiArrowCollapseVertical, mdiArrowExpandVertical, mdiFileDocumentOutline, mdiExportVariant, mdiLightbulbOutline, mdiLayersOutline, mdiLayersPlus, mdiStarPlus, mdiStar, mdiStarOutline, mdiSwapHorizontal, mdiFolderOpen, mdiRefresh, mdiClose, mdiImageMultipleOutline, mdiPalette, mdiFitToPageOutline, mdiSelectAll, mdiVectorSelection, mdiEraser, mdiStarOff, mdiCheck, mdiVectorSquare, mdiZipBox, mdiMinus, mdiFileCode } from '@mdi/js'
 import { Icon } from './components/Icon.jsx'
 import Select from './components/Select.jsx'
+import ExamplesPanel from './components/panels/ExamplesPanel.jsx'
 import { polylineToPath } from './lib/geometry.js'
 import { buildSVG } from './lib/svg.js'
 import { toGcode } from './lib/gcode.js'
@@ -428,28 +429,7 @@ export default function App() {
     setDoc(d => ({ ...d, paperSize: 'custom' }))
   }
 
-  // Built-in Examples (served from /presets)
-  const [examples, setExamples] = useState([])
-  const [selectedExample, setSelectedExample] = useState('')
-  const [examplesQuery, setExamplesQuery] = useState('')
-  const filteredExamples = useMemo(() => {
-    const q = (examplesQuery || '').toLowerCase().trim()
-    if (!q) return examples
-    return examples.filter(e => String(e.label || '').toLowerCase().includes(q))
-  }, [examples, examplesQuery])
-  useEffect(() => {
-    let cancelled = false
-    fetch('/presets/index.json')
-      .then(r => r.ok ? r.json() : [])
-      .then(list => {
-        if (!cancelled && Array.isArray(list)) {
-          const sorted = list.slice().sort((a, b) => String(a.label || '').localeCompare(String(b.label || '')))
-          setExamples(sorted)
-        }
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
+  // Examples are now handled by <ExamplesPanel/>
   const loadExample = async (file) => {
     if (!file) return
     try {
@@ -463,16 +443,7 @@ export default function App() {
       showToast('Failed to load example')
     }
   }
-  const setDefaultExample = () => {
-    if (!selectedExample) return
-    try {
-      localStorage.setItem('plotterlab:defaultPreset', selectedExample)
-      showToast('Default example set')
-    } catch {}
-  }
-  const clearDefaultExample = () => {
-    try { localStorage.removeItem('plotterlab:defaultPreset'); showToast('Default example cleared') } catch {}
-  }
+  // Default example helpers will be passed to ExamplesPanel
   // First-launch: load default preset once if configured and no saved state yet
   useEffect(() => {
     try {
@@ -2126,24 +2097,7 @@ export default function App() {
               </button>
               <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleImport} />
             </div>
-            <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10 col-span-2 lg:col-span-3 mt-2"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiLightbulbOutline}/> <span>Examples</span></h2></div>
-            <div className="flex gap-2 items-center col-span-2 lg:col-span-3">
-              <input className="input flex-1" placeholder="Search examples…" value={examplesQuery} onChange={e=>setExamplesQuery(e.target.value)} />
-              <Select className="flex-1" value={selectedExample}
-                onChange={(v)=>setSelectedExample(v)}
-                options={[{ label: '(Examples)', value: '' }, ...filteredExamples.map(e => ({ label: e.label, value: e.file }))]}
-              />
-              <button className="btn" onClick={()=>loadExample(selectedExample)} disabled={!selectedExample} title="Load Example">
-                {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Example</>)}
-              </button>
-              <button className="btn" onClick={setDefaultExample} disabled={!selectedExample} title="Set Default Example">
-                {compactUI ? (<><Icon path={mdiStarPlus}/> Set</>) : (<><Icon path={mdiStarPlus}/> Set Default</>)}
-              </button>
-              <button className="btn" onClick={clearDefaultExample} title="Clear Default Example">
-                {compactUI ? (<><Icon path={mdiStarOff}/> Clear</>) : (<><Icon path={mdiStarOff}/> Clear Default</>)}
-              </button>
-            </div>
-            {doc.exportMode === 'combined' && (
+<ExamplesPanel            compactUI={compactUI}            onLoadExample={(file)=>loadExample(file)}            onSetDefault={(file)=>{ try { localStorage.setItem('plotterlab:defaultPreset', file); showToast('Default example set') } catch {} }}            onClearDefault={()=>{ try { localStorage.removeItem('plotterlab:defaultPreset'); showToast('Default example cleared') } catch {} }}          />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" className="w-4 h-4" checked={doc.pauseCombined ?? true} onChange={e=>setDoc(d=>({...d,pauseCombined:e.target.checked}))} />

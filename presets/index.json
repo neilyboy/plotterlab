@@ -73,15 +73,15 @@
   , { "label": "Spirograph → Bands (Clip)", "file": "spiro_bands_clip.json" }
   , { "label": "Sunflower Bands → Twist Warp", "file": "sunflower_bands_twist.json" }
   , { "label": "Truchet Tiles → Bands (Clip)", "file": "truchet_bands_clip.json" }
-  , { "label": "De Jong Nebula", "file": "de_jong_nebula.json" }
-  , { "label": "Harmonograph Lissajous", "file": "harmonograph_lissajous.json" }
-  , { "label": "Isometric City Grid", "file": "isometric_city_grid.json" }
-  , { "label": "Isometric City → Path Warp", "file": "isometric_city_warp.json" }
-  , { "label": "Retro Pipes Circuit", "file": "retro_pipes_circuit.json" }
-  , { "label": "Star Lattice → Hatch (Clip)", "file": "star_lattice_hatch_clip_2.json" }
-  , { "label": "Voronoi Shatter → Bands (Clip)", "file": "voronoi_shatter_bands_2.json" }
-  , { "label": "Phyllotaxis Rings", "file": "phyllotaxis_rings.json" }
-  , { "label": "Truchet Tiles → Moiré (Clip)", "file": "truchet_dual_moire.json" }
-  , { "label": "Flow Ribbons Swirl", "file": "flow_ribbons_swirl.json" }
-  , { "label": "Quasicrystal Animated Phase", "file": "quasicrystal_anim_phase.json" }
+  , { "label": "De Jong Nebula", "file": "de_jong_nebula.json", "tags": ["attractor"] }
+  , { "label": "Harmonograph Lissajous", "file": "harmonograph_lissajous.json", "tags": ["harmonograph"] }
+  , { "label": "Isometric City Grid", "file": "isometric_city_grid.json", "tags": ["city","isometric"] }
+  , { "label": "Isometric City → Path Warp", "file": "isometric_city_warp.json", "tags": ["city","warp"] }
+  , { "label": "Retro Pipes Circuit", "file": "retro_pipes_circuit.json", "tags": ["pipes","retro"] }
+  , { "label": "Star Lattice → Hatch (Clip)", "file": "star_lattice_hatch_clip_2.json", "tags": ["lattice","hatch","clip"] }
+  , { "label": "Voronoi Shatter → Bands (Clip)", "file": "voronoi_shatter_bands_2.json", "tags": ["voronoi","bands","clip"] }
+  , { "label": "Phyllotaxis Rings", "file": "phyllotaxis_rings.json", "tags": ["phyllotaxis"] }
+  , { "label": "Truchet Tiles → Moiré (Clip)", "file": "truchet_dual_moire.json", "tags": ["truchet","moire","clip"] }
+  , { "label": "Flow Ribbons Swirl", "file": "flow_ribbons_swirl.json", "tags": ["flow","ribbons"] }
+  , { "label": "Quasicrystal Animated Phase", "file": "quasicrystal_anim_phase.json", "tags": ["quasicrystal","animated"] }
 ]
