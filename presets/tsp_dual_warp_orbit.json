@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"tsp","name":"TSP Art","color":"#e5e7eb","visible":true,"generator":"tspArt","params":{"points":1600,"useImage":false,"invert":false,"gamma":1.0,"preserveAspect":true,"improveIters":120,"margin":20,"simplifyTol":0}},
+    {"id":"warp","name":"Dual Warp Orbit","color":"#00AEEF","visible":true,"generator":"pathWarp","params":{"srcLayerId":"","srcToPrevious":true,"amp":2.2,"scale":0.018,"step":1.0,"copies":2,"rotateFlow":false,"margin":20,"simplifyTol":0}}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"sun","name":"Sunflower Bands","color":"#FFF200","visible":true,"generator":"sunflowerBands","params":{"count":1000,"spacing":3.0,"angleDeg":137.50776405003785,"dotSize":1.8,"bandPeriod":7,"bandDuty":0.55,"jitter":0.15,"margin":20,"simplifyTol":0}},
+    {"id":"twist","name":"Twist Warp","color":"#EC008C","visible":true,"generator":"pathWarp","params":{"srcLayerId":"","srcToPrevious":true,"amp":1.2,"scale":0.016,"step":1.0,"copies":1,"rotateFlow":true,"margin":20,"simplifyTol":0}}
+  ]
+}

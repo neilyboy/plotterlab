@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"iso","name":"Iso Fans","color":"#2dd4bf","visible":true,"generator":"isoContours","params":{"cols":160,"rows":110,"levels":56,"separation":62,"lobes":3,"sigmaX":85,"sigmaY":58,"amplitude":1,"bias":0.2,"warp":0.15,"margin":20,"simplifyTol":0}},
+    {"id":"hatch","name":"Hatch Fans (clipped)","color":"#e5e7eb","visible":true,"generator":"hatchFill","params":{"angleDeg":18,"spacing":3.0,"offset":0,"cross":true,"crossOffset":0,"clipToPrevious":true,"clipRule":"union","margin":20}}
+  ]
+}

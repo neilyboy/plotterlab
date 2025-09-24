@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"icons","name":"MDI Icon Field","color":"#e5e7eb","visible":true,"generator":"mdiIconField","params":{"namesCsv":"mdiFlower,mdiRobot,mdiHeart","cols":12,"rows":8,"spacing":34,"jitter":0.1,"scaleMin":5,"scaleMax":7,"rotationJitter":0.5,"samples":220,"margin":20,"simplifyTol":0}},
+    {"id":"twist","name":"Twist Flow","color":"#00AEEF","visible":true,"generator":"pathWarp","params":{"srcLayerId":"","srcToPrevious":true,"amp":2.0,"scale":0.018,"step":1.0,"copies":1,"rotateFlow":true,"margin":20,"simplifyTol":0}}
+  ]
+}

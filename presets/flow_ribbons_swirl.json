@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"fr","name":"Flow Ribbons Swirl","color":"#60a5fa","visible":true,"generator":"flowRibbons","params":{"seedsX":40,"seedsY":58,"minSpacing":1.5,"stepLen":0.9,"maxSteps":1900,"centers":3,"sep":150,"sigma":90,"swirl":1.3,"swirlAlt":true,"baseAngleDeg":-16,"drift":0.25,"noiseAmp":0.15,"noiseScale":0.010,"followOnly":false,"margin":20,"simplifyTol":0}}
+  ]
+}

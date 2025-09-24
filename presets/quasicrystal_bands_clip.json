@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"qc","name":"Quasicrystal","color":"#2dd4bf","visible":true,"generator":"quasicrystalContours","params":{"waves":8,"freq":0.082,"contrast":1.3,"phase":0,"cols":170,"rows":118,"iso":0,"rotateDeg":4,"warp":0.16,"animatePhase":false,"phaseSpeed":1.0,"margin":20,"simplifyTol":0}},
+    {"id":"bands","name":"Stripe Bands (clipped)","color":"#e5e7eb","visible":true,"generator":"stripeBands","params":{"cols":180,"rows":120,"levels":52,"isoStart":-0.85,"isoEnd":0.85,"freqX":0.07,"freqY":0.06,"radialFreq":0.033,"radialAmp":0.6,"angleDeg":0,"warp":0.2,"tubeDepth":false,"tubePeriod":12,"tubeMinDuty":0.16,"tubeCurve":"tri","clipToPrevious":true,"clipRule":"union","margin":20,"simplifyTol":0}}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"superA","name":"Super A","color":"#00AEEF","visible":true,"generator":"superformulaRings","params":{"m":10,"a":1,"b":1,"n1":0.25,"n2":0.25,"n3":0.25,"rings":58,"steps":980,"inner":0.10,"rotateDeg":8,"morph":0.22,"twistDeg":-12,"n23Lock":true,"mRound":true,"mEven":false,"margin":20,"simplifyTol":0}},
+    {"id":"superB","name":"Super B","color":"#EC008C","visible":true,"generator":"superformulaRings","params":{"m":14,"a":1,"b":1,"n1":0.2,"n2":0.3,"n3":0.3,"rings":60,"steps":1020,"inner":0.10,"rotateDeg":-6,"morph":0.3,"twistDeg":16,"n23Lock":false,"mRound":true,"mEven":true,"margin":20,"simplifyTol":0}},
+    {"id":"combo","name":"Combinator XOR","color":"#e5e7eb","visible":true,"generator":"combinator","params":{"srcA":"superA","srcB":"superB","op":"xor","margin":20,"simplifyTol":0}},
+    {"id":"stipple","name":"Poisson Stipple (clipped)","color":"#e5e7eb","visible":true,"generator":"poissonStipple","params":{"minDist":5.6,"attempts":9000,"useImage":false,"invert":false,"gamma":1.0,"preserveAspect":true,"dotMin":0.8,"dotMax":1.6,"connectPath":true,"clipToPrevious":true,"clipRule":"union","margin":20,"simplifyTol":0}}
+  ]
+}

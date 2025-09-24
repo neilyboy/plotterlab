@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"frames","name":"Stripe Band Frames","color":"#e5e7eb","visible":true,"generator":"stripeBands","params":{"cols":180,"rows":120,"levels":52,"isoStart":-0.85,"isoEnd":0.85,"freqX":0.075,"freqY":0.06,"radialFreq":0.032,"radialAmp":0.55,"angleDeg":0,"warp":0.15,"tubeDepth":true,"tubePeriod":11,"tubeMinDuty":0.18,"tubeCurve":"tri","margin":20,"simplifyTol":0}},
+    {"id":"moire","name":"Wave Moiré (clipped)","color":"#2dd4bf","visible":true,"generator":"waveMoire","params":{"lines":200,"freqA":0.035,"freqB":0.051,"phase":0,"amp":18,"angleDeg":10,"warp":0.35,"clipToPrevious":true,"clipRule":"even-odd","margin":20,"simplifyTol":0}}
+  ]
+}

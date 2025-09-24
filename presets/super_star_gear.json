@@ -1,0 +1,67 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "super-gear",
+      "name": "Super Gear",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 12,
+        "a": 1,
+        "b": 1,
+        "n1": 0.16,
+        "n2": 0.30,
+        "n3": 0.30,
+        "rings": 64,
+        "steps": 1100,
+        "inner": 0.10,
+        "rotateDeg": 0,
+        "morph": 0.30,
+        "twistDeg": 18,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": true,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "super-star",
+      "name": "Super Star",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 10,
+        "a": 1,
+        "b": 1,
+        "n1": 0.25,
+        "n2": 0.25,
+        "n3": 0.25,
+        "rings": 60,
+        "steps": 1000,
+        "inner": 0.10,
+        "rotateDeg": 8,
+        "morph": 0.20,
+        "twistDeg": -20,
+        "n23Lock": true,
+        "mRound": true,
+        "mEven": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

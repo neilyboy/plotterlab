@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"iso","name":"Isometric City","color":"#e5e7eb","visible":true,"generator":"isometricCity","params":{"cols":12,"rows":10,"density":0.8,"base":18,"height":60,"jitter":0.15,"margin":20,"simplifyTol":0}},
+    {"id":"warp","name":"Path Warp","color":"#00AEEF","visible":true,"generator":"pathWarp","params":{"srcToPrevious":true,"amp":2.6,"scale":0.018,"step":1.0,"copies":1,"rotateFlow":false,"margin":20,"simplifyTol":0}}
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "ribbons-c",
+      "name": "Flow Ribbons C",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "flowRibbons",
+      "params": {
+        "seedsX": 42,
+        "seedsY": 60,
+        "minSpacing": 1.6,
+        "stepLen": 0.9,
+        "maxSteps": 1600,
+        "centers": 3,
+        "sep": 140,
+        "sigma": 80,
+        "swirl": 1.25,
+        "swirlAlt": true,
+        "baseAngleDeg": -12,
+        "drift": 0.25,
+        "noiseAmp": 0.12,
+        "noiseScale": 0.010,
+        "followOnly": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "ribbons-m",
+      "name": "Flow Ribbons M",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "flowRibbons",
+      "params": {
+        "seedsX": 40,
+        "seedsY": 58,
+        "minSpacing": 1.6,
+        "stepLen": 0.9,
+        "maxSteps": 1600,
+        "centers": 3,
+        "sep": 160,
+        "sigma": 84,
+        "swirl": 1.25,
+        "swirlAlt": true,
+        "baseAngleDeg": 6,
+        "drift": 0.25,
+        "noiseAmp": 0.12,
+        "noiseScale": 0.010,
+        "followOnly": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "ribbons-y",
+      "name": "Flow Ribbons Y",
+      "color": "#FFF200",
+      "visible": true,
+      "generator": "flowRibbons",
+      "params": {
+        "seedsX": 44,
+        "seedsY": 62,
+        "minSpacing": 1.6,
+        "stepLen": 0.9,
+        "maxSteps": 1600,
+        "centers": 3,
+        "sep": 150,
+        "sigma": 82,
+        "swirl": 1.25,
+        "swirlAlt": true,
+        "baseAngleDeg": 18,
+        "drift": 0.25,
+        "noiseAmp": 0.12,
+        "noiseScale": 0.010,
+        "followOnly": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

@@ -37,6 +37,7 @@ import { lsystem } from './lib/generators/lsystem.js'
 import { phyllotaxis } from './lib/generators/phyllotaxis.js'
 import { truchet } from './lib/generators/truchet.js'
 import { hilbert } from './lib/generators/hilbert.js'
+import { maze } from './lib/generators/maze.js'
 import { pathWarp } from './lib/generators/pathWarp.js'
 import { imageContours } from './lib/generators/imageContours.js'
 import { poissonStipple } from './lib/generators/poissonStipple.js'
@@ -49,6 +50,8 @@ import { sunflowerBands } from './lib/generators/sunflowerBands.js'
 import { combinator } from './lib/generators/combinator.js'
 import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
+import { applyPathPlanning } from './lib/pipeline/decorators.js'
+import { getGenerators } from './lib/generators/registry.js'
 
 // Cross-browser unique ID helper (crypto.randomUUID fallback)
 const uid = () => {
@@ -104,566 +107,9 @@ const PAPER_SIZES = [
 ]
 const COLOR_OPTIONS = PALETTE.map(p => ({ label: p.name, value: p.value }))
 
-const GENERATORS = {
-  spirograph: {
-    name: 'Spirograph',
-    fn: spirograph,
-    params: {
-      R: 120, // outer radius
-      r: 35,  // inner radius
-      d: 50,  // pen offset
-      turns: 1300,
-      step: 0.02,
-      centerX: 210,
-      centerY: 148,
-      scale: 1,
-      simplifyTol: 0
-    }
-  },
-  polarStarburst: {
-    name: 'Polar Starburst',
-    fn: polarStarburst,
-    params: {
-      spikes: 72,
-      spreadDeg: 6,
-      linesPerSpike: 1,
-      inner: 8,
-      outer: null,
-      jitterDeg: 2,
-      lengthJitter: 0.15,
-      centerX: null,
-      centerY: null,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  flowRibbons: {
-    name: 'Flow Ribbons',
-    fn: flowRibbons,
-    params: {
-      seedsX: 42,
-      seedsY: 60,
-      minSpacing: 1.6,
-      stepLen: 0.9,
-      maxSteps: 1800,
-      centers: 3,
-      sep: 160,
-      sigma: 90,
-      swirl: 1.25,
-      swirlAlt: true,
-      baseAngleDeg: -18,
-      drift: 0.25,
-      noiseAmp: 0.15,
-      noiseScale: 0.010,
-      followOnly: false,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  mdiIconField: {
-    name: 'MDI Icon Field',
-    fn: mdiIconField,
-    params: {
-      namesCsv: 'mdiFlower,mdiRobot,mdiHeart',
-      cols: 10,
-      rows: 8,
-      spacing: 36,
-      jitter: 0.1,
-      scaleMin: 5,
-      scaleMax: 7,
-      rotationJitter: 0.4,
-      samples: 220,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  hatchFill: {
-    name: 'Hatch Fill',
-    fn: hatchFill,
-    params: {
-      angleDeg: 45,
-      spacing: 6,
-      offset: 0,
-      cross: false,
-      crossOffset: 0,
-      clipToPrevious: false,
-      clipRule: 'union',
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  pixelMosaic: {
-    name: 'Pixel Mosaic',
-    fn: pixelMosaic,
-    params: {
-      cols: 32,
-      rows: 24,
-      density: 0.6,
-      jitter: 0.0,
-      style: 'squares',
-      imageInfo: '',
-      levels: 3,
-      invert: false,
-      preserveAspect: true,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  halftone: {
-    name: 'Halftone / Dither',
-    fn: halftone,
-    params: {
-      imageInfo: '',
-      spacing: 1.2,
-      angleDeg: 0,
-      segment: 0.4,
-      method: 'floyd',
-      gamma: 1.0,
-      invert: false,
-      preserveAspect: true,
-      shape: 'lines', // 'lines' | 'circle' | 'ellipse' | 'square'
-      dotMin: 0.3,
-      dotMax: 2.0,
-      dotAspect: 1.0,
-      squiggleAmp: 0,
-      squigglePeriod: 6,
-      squiggleMode: 'sine', // 'sine' | 'zigzag'
-      squiggleDarkness: true,
-      squiggleJitterAmp: 0,
-      squiggleJitterScale: 0.02,
-      squigglePhaseJitter: 0,
-      radialCenterX: '',
-      radialCenterY: '',
-      angStepDeg: 6,
-      clipToPrevious: false,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  retroPipes: {
-    name: 'Retro Pipes',
-    fn: retroPipes,
-    params: {
-      cols: 24,
-      rows: 16,
-      runs: 3,
-      steps: 240,
-      turnProb: 0.35,
-      round: 2,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  voronoiShatter: {
-    name: 'Voronoi Shatter',
-    fn: voronoiShatter,
-    params: {
-      cells: 80,
-      relax: 1,
-      jitter: 0.1,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  starLattice: {
-    name: 'Star Lattice',
-    fn: starLattice,
-    params: {
-      cols: 11,
-      rows: 15,
-      spacing: 28,
-      radius: 11,
-      jitter: 0.0,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  isometricCity: {
-    name: 'Isometric City',
-    fn: isometricCity,
-    params: {
-      cols: 12,
-      rows: 10,
-      density: 0.8,
-      base: 18,
-      height: 60,
-      jitter: 0.15,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  mdiPattern: {
-    name: 'MDI Pattern',
-    fn: mdiPattern,
-    params: {
-      iconIndex: 0,
-      iconName: 'mdiFlower',
-      cols: 6,
-      rows: 5,
-      spacing: 40,
-      scale: 6,
-      rotation: 0,
-      jitter: 0.05,
-      margin: 20,
-      samples: 240,
-      clipRule: 'union',
-      simplifyTol: 0
-    }
-  },
-  flowField: {
-    name: 'Flow Field',
-    fn: flowField,
-    params: {
-      cols: 36,
-      rows: 60,
-      scale: 6,
-      steps: 220,
-      separation: 6,
-      margin: 20,
-      curl: 0.9,
-      jitter: 0.15,
-      simplifyTol: 0
-    }
-  },
-  isoContours: {
-    name: 'Iso Contours',
-    fn: isoContours,
-    params: {
-      cols: 140,
-      rows: 100,
-      levels: 60,
-      separation: 70,
-      lobes: 2,
-      sigmaX: 80,
-      sigmaY: 55,
-      amplitude: 1,
-      bias: 0.18,
-      warp: 0,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  superformulaRings: {
-    name: 'Superformula Rings',
-    fn: superformulaRings,
-    params: {
-      m: 8,
-      a: 1,
-      b: 1,
-      n1: 0.35,
-      n2: 0.3,
-      n3: 0.3,
-      rings: 60,
-      steps: 900,
-      inner: 0.08,
-      rotateDeg: 0,
-      morph: 0.25,
-      twistDeg: 0,
-      n23Lock: false,
-      mRound: true,
-      mEven: false,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  waveMoire: {
-    name: 'Wave Moiré',
-    fn: waveMoire,
-    params: {
-      lines: 180,
-      freqA: 0.036,
-      freqB: 0.049,
-      phase: 0,
-      amp: 18,
-      angleDeg: 12,
-      warp: 0.4,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  streamlines: {
-    name: 'Streamlines',
-    fn: streamlines,
-    params: {
-      seedsX: 36,
-      seedsY: 26,
-      minSpacing: 2.6,
-      stepLen: 1.4,
-      maxSteps: 480,
-      noiseScale: 0.015,
-      curl: 1.0,
-      jitter: 0.35,
-      followOnly: false,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  stripeBands: {
-    name: 'Stripe Bands',
-    fn: stripeBands,
-    params: {
-      cols: 180,
-      rows: 120,
-      levels: 48,
-      isoStart: -0.9,
-      isoEnd: 0.9,
-      freqX: 0.08,
-      freqY: 0.06,
-      radialFreq: 0.035,
-      radialAmp: 0.6,
-      angleDeg: 0,
-      warp: 0.2,
-      tubeDepth: false,
-      tubePeriod: 12,
-      tubeMinDuty: 0.15,
-      tubeCurve: 'tri',
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  quasicrystalContours: {
-    name: 'Quasicrystal Contours',
-    fn: quasicrystalContours,
-    params: {
-      waves: 7,
-      freq: 0.07,
-      contrast: 1.2,
-      phase: 0,
-      cols: 180,
-      rows: 120,
-      iso: 0,
-      rotateDeg: 0,
-      warp: 0,
-      animatePhase: false,
-      phaseSpeed: 1.0,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  reactionContours: {
-    name: 'Reaction Contours',
-    fn: reactionContours,
-    params: {
-      cols: 180,
-      rows: 120,
-      steps: 500,
-      feed: 0.036,
-      kill: 0.062,
-      diffU: 0.16,
-      diffV: 0.08,
-      dt: 1.0,
-      iso: 0.5,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  svgImport: {
-    name: 'SVG Import',
-    fn: svgImport,
-    params: {
-      srcPolylines: [],
-      detail: 1,
-      scale: 1,
-      offsetX: 0,
-      offsetY: 0,
-      rotateDeg: 0,
-      clipRule: 'union',
-      simplifyTol: 0
-    }
-  },
-  lsystem: {
-    name: 'L-system',
-    fn: lsystem,
-    params: {
-      preset: 'koch', // 'koch' | 'dragon' | 'plant'
-      iterations: 4,
-      angleDeg: 60,
-      step: 6,
-      jitter: 0,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  phyllotaxis: {
-    name: 'Phyllotaxis',
-    fn: phyllotaxis,
-    params: {
-      count: 1500,
-      angleDeg: 137.507764,
-      spacing: 2.8,
-      connect: true,
-      jitter: 0,
-      dotSize: 1.4,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  truchet: {
-    name: 'Truchet Tiles',
-    fn: truchet,
-    params: {
-      cols: 24,
-      rows: 16,
-      variant: 'curves', // 'curves' | 'lines'
-      jitter: 0,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  hilbert: {
-    name: 'Hilbert Curve',
-    fn: hilbert,
-    params: {
-      order: 6,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  pathWarp: {
-    name: 'Path Warp',
-    fn: pathWarp,
-    params: {
-      srcLayerId: '',
-      srcToPrevious: false,
-      amp: 3.5,
-      scale: 0.02,
-      step: 1.2,
-      copies: 1,
-      rotateFlow: false,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  imageContours: {
-    name: 'Image Contours',
-    fn: imageContours,
-    params: {
-      cols: 140,
-      rows: 100,
-      levels: 8,
-      invert: false,
-      gamma: 1.0,
-      preserveAspect: true,
-      imageInfo: '',
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  poissonStipple: {
-    name: 'Poisson Stipple',
-    fn: poissonStipple,
-    params: {
-      minDist: 6,
-      attempts: 8000,
-      useImage: true,
-      invert: false,
-      gamma: 1.0,
-      preserveAspect: true,
-      dotMin: 0.5,
-      dotMax: 1.8,
-      connectPath: false,
-      imageInfo: '',
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  tspArt: {
-    name: 'TSP Art',
-    fn: tspArt,
-    params: {
-      points: 2000,
-      useImage: true,
-      invert: false,
-      gamma: 1.0,
-      preserveAspect: true,
-      improveIters: 0,
-      imageInfo: '',
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  harmonograph: {
-    name: 'Harmonograph',
-    fn: harmonograph,
-    params: {
-      Ax: 120, Ay: 80,
-      fx: 0.21, fy: 0.19,
-      px: 0, py: Math.PI/2,
-      dx: 0.01, dy: 0.012,
-      tMax: 60,
-      steps: 8000,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  deJong: {
-    name: 'De Jong Attractor',
-    fn: deJong,
-    params: {
-      a: 2.01, b: -2.53, c: 1.61, d: -0.33,
-      iter: 120000,
-      burn: 1000,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  reactionStrokes: {
-    name: 'Reaction Strokes',
-    fn: reactionStrokes,
-    params: {
-      cols: 160,
-      rows: 110,
-      steps: 450,
-      feed: 0.036,
-      kill: 0.062,
-      diffU: 0.16,
-      diffV: 0.08,
-      dt: 1.0,
-      seedsX: 36,
-      seedsY: 26,
-      minSpacing: 2.4,
-      stepLen: 1.1,
-      maxSteps: 650,
-      vMin: 0.18,
-      vMax: 0.82,
-      jitter: 0.25,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  clifford: {
-    name: 'Clifford Attractor',
-    fn: clifford,
-    params: { a: -1.7, b: 1.3, c: -0.1, d: -1.21, iter: 150000, burn: 1000, margin: 20, simplifyTol: 0 }
-  },
-  sunflowerBands: {
-    name: 'Sunflower Bands',
-    fn: sunflowerBands,
-    params: {
-      count: 900,
-      spacing: 3.2,
-      angleDeg: 137.50776405003785,
-      dotSize: 2.0,
-      bandPeriod: 7,
-      bandDuty: 0.55,
-      jitter: 0.15,
-      margin: 20,
-      simplifyTol: 0
-    }
-  },
-  combinator: {
-    name: 'Combinator',
-    fn: combinator,
-    params: {
-      srcA: '',
-      srcB: '',
-      op: 'intersect', // intersect | union | difference | xor
-      margin: 20,
-      simplifyTol: 0
-    }
-  }
-
-};
+// GENERATORS are sourced from the central registry; we keep them in a memo so
+// a reload action (or plugin load) can refresh the list without page reload.
+// Note: we compute inside the component (not at module scope) to allow updates.
  
   // Quasicrystal presets helper
   const qcPresetValues = (name) => {
@@ -779,11 +225,51 @@ const newLayer = (i = 0) => ({
   color: PALETTE[i % PALETTE.length].value,
   visible: true,
   generator: 'spirograph',
-  params: { ...GENERATORS['spirograph'].params },
+  // Use current registry defaults at call-time to avoid stale references
+  params: { ...getGenerators()['spirograph'].params },
   uiCollapsed: false
 })
 
 export default function App() {
+  // Generators registry state (supports plugin reloads)
+  const [generatorNonce, setGeneratorNonce] = useState(0)
+  const [loadingPlugins, setLoadingPlugins] = useState(false)
+  const GENERATORS = useMemo(() => getGenerators(), [generatorNonce])
+  // Load plugin scripts from /plugins/index.json and then refresh the generator registry
+  const reloadGenerators = async () => {
+    try {
+      setLoadingPlugins(true)
+      const res = await fetch(`/plugins/index.json?ts=${Date.now()}`)
+      if (!res.ok) throw new Error(`Failed to load plugin index (${res.status})`)
+      const list = await res.json()
+      const urls = Array.isArray(list) ? list : []
+      // Helper to load a script sequentially to preserve order
+      const loadScript = (src) => new Promise((resolve, reject) => {
+        const s = document.createElement('script')
+        s.src = src.includes('?') ? `${src}&ts=${Date.now()}` : `${src}?ts=${Date.now()}`
+        s.async = false
+        s.onload = () => resolve()
+        s.onerror = (e) => reject(e)
+        document.head.appendChild(s)
+      })
+      for (const u of urls) {
+        const url = String(u || '')
+        const abs = url.startsWith('/') ? url : `/${url}`
+        await loadScript(abs)
+      }
+      // Bump nonce so UI re-reads the registry
+      setGeneratorNonce(n => n + 1)
+      showToast('Generators reloaded')
+    } catch (err) {
+      console.error('Plugin reload failed', err)
+      showToast('Reload failed — check console')
+    } finally {
+      setLoadingPlugins(false)
+    }
+  }
+  // Initial plugin load on mount (best-effort)
+  useEffect(() => { reloadGenerators().catch(()=>{}) }, [])
+
   const [doc, setDoc] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('plotterlab:doc'))
@@ -800,6 +286,19 @@ export default function App() {
   })
   // Ephemeral text buffers for numeric inputs so the user can clear fields fully while typing
   const [numEdit, setNumEdit] = useState({})
+  // Lightweight toast for user feedback (e.g., after plugin reload)
+  const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
+  const showToast = (msg, ms = 2200) => {
+    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); toastTimerRef.current = null }
+    setToast(String(msg || ''))
+    toastTimerRef.current = setTimeout(() => { setToast(null); toastTimerRef.current = null }, Math.max(800, ms))
+  }
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); toastTimerRef.current = null }
+    }
+  }, [])
   // Keyboard/interaction helpers
   const [spaceDown, setSpaceDown] = useState(false)
   const [isPanning, setIsPanning] = useState(false)
@@ -812,11 +311,12 @@ export default function App() {
   // Help overlay refs for click-outside dismiss
   const helpRef = useRef(null)
   const helpBtnRef = useRef(null)
-  const [compactUI, setCompactUI] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('plotterlab:compactUI')) || false } catch { return false }
-  })
-  const [superCompact, setSuperCompact] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('plotterlab:superCompact')) || false } catch { return false }
+  // Enforce Super Compact UI across the app
+  const compactUI = true
+  const superCompact = true
+  // Simple Tools/Layers tabs in the sidebar
+  const [uiTab, setUiTab] = useState(() => {
+    try { return localStorage.getItem('plotterlab:uiTab') || 'tools' } catch { return 'tools' }
   })
   const [layerMenuId, setLayerMenuId] = useState(null)
   const [groupOpen, setGroupOpen] = useState(() => {
@@ -824,8 +324,7 @@ export default function App() {
   })
   useEffect(() => { try { localStorage.setItem('plotterlab:paperFavs', JSON.stringify(paperFavorites)) } catch(e){} }, [paperFavorites])
   useEffect(() => { try { localStorage.setItem('plotterlab:showHelp', JSON.stringify(showHelp)) } catch(e){} }, [showHelp])
-  useEffect(() => { try { localStorage.setItem('plotterlab:compactUI', JSON.stringify(compactUI)) } catch(e){} }, [compactUI])
-  useEffect(() => { try { localStorage.setItem('plotterlab:superCompact', JSON.stringify(superCompact)) } catch(e){} }, [superCompact])
+  useEffect(() => { try { localStorage.setItem('plotterlab:uiTab', uiTab) } catch(e){} }, [uiTab])
   useEffect(() => { try { localStorage.setItem('plotterlab:groupOpen', JSON.stringify(groupOpen)) } catch(e){} }, [groupOpen])
   // Close any open layer menu on outside click; also dismiss help overlay on outside click
   useEffect(() => {
@@ -841,6 +340,56 @@ export default function App() {
     window.addEventListener('click', onDocClick)
     return () => window.removeEventListener('click', onDocClick)
   }, [showHelp])
+
+  // Compact label helpers for sidebar forms (super compact enforced)
+  const labelClass = superCompact
+    ? 'flex flex-col gap-0 capitalize text-[11px]'
+    : (compactUI ? 'flex flex-col gap-0.5 capitalize text-xs' : 'flex flex-col gap-1 capitalize')
+  const labelRowClass = superCompact
+    ? 'flex items-center gap-1 capitalize text-[11px]'
+    : (compactUI ? 'flex items-center gap-1 capitalize text-xs' : 'flex items-center gap-2 capitalize')
+
+  // Group open/close helpers with sensible default (open by default)
+  const isGroupOpen = (layerId, key) => {
+    const l = (groupOpen && groupOpen[layerId]) || {}
+    return typeof l[key] === 'boolean' ? l[key] : true
+  }
+  const toggleGroup = (layerId, key) => {
+    setGroupOpen(prev => {
+      const p = prev || {}
+      const l = { ...(p[layerId] || {}) }
+      const cur = (typeof l[key] === 'boolean') ? l[key] : true
+      l[key] = !cur
+      return { ...p, [layerId]: l }
+    })
+  }
+
+  // Numeric input renderer with ephemeral text buffer so users can clear fully while typing
+  const renderNumParam = (layer, key, label) => {
+    const bufKey = `${layer.id}:${key}`
+    const bufVal = Object.prototype.hasOwnProperty.call(numEdit, bufKey) ? numEdit[bufKey] : ''
+    const curVal = bufVal !== '' ? bufVal : (Number.isFinite(layer?.params?.[key]) ? layer.params[key] : '')
+    const commit = (val) => {
+      const n = Number(val)
+      setLayers(ls => ls.map(l => l.id === layer.id ? { ...l, params: { ...l.params, [key]: Number.isFinite(n) ? n : 0 } } : l))
+      setNumEdit(s => { const next = { ...s }; delete next[bufKey]; return next })
+    }
+    return (
+      <label className={labelClass} key={`${layer.id}_${key}`}>
+        {label}
+        <input
+          className="input"
+          type="number"
+          step="any"
+          value={curVal}
+          onChange={e => setNumEdit(s => ({ ...s, [bufKey]: e.target.value }))}
+          onBlur={e => commit(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') commit(e.currentTarget.value) }}
+        />
+      </label>
+    )
+  }
+
   const basePaperOptions = useMemo(() => [...PAPER_SIZES, ...customPaperSizes], [customPaperSizes])
   const paperOptions = useMemo(() => {
     const isFav = (k) => paperFavorites.includes(k)
@@ -882,11 +431,22 @@ export default function App() {
   // Built-in Examples (served from /presets)
   const [examples, setExamples] = useState([])
   const [selectedExample, setSelectedExample] = useState('')
+  const [examplesQuery, setExamplesQuery] = useState('')
+  const filteredExamples = useMemo(() => {
+    const q = (examplesQuery || '').toLowerCase().trim()
+    if (!q) return examples
+    return examples.filter(e => String(e.label || '').toLowerCase().includes(q))
+  }, [examples, examplesQuery])
   useEffect(() => {
     let cancelled = false
     fetch('/presets/index.json')
       .then(r => r.ok ? r.json() : [])
-      .then(list => { if (!cancelled && Array.isArray(list)) setExamples(list) })
+      .then(list => {
+        if (!cancelled && Array.isArray(list)) {
+          const sorted = list.slice().sort((a, b) => String(a.label || '').localeCompare(String(b.label || '')))
+          setExamples(sorted)
+        }
+      })
       .catch(() => {})
     return () => { cancelled = true }
   }, [])
@@ -897,16 +457,21 @@ export default function App() {
       const data = await res.json()
       if (data.doc) setDoc(d => ({ ...d, ...data.doc }))
       if (Array.isArray(data.layers)) setLayers(data.layers)
+      showToast('Example loaded')
     } catch (e) {
       console.error('Load example failed', e)
+      showToast('Failed to load example')
     }
   }
   const setDefaultExample = () => {
     if (!selectedExample) return
-    try { localStorage.setItem('plotterlab:defaultPreset', selectedExample) } catch {}
+    try {
+      localStorage.setItem('plotterlab:defaultPreset', selectedExample)
+      showToast('Default example set')
+    } catch {}
   }
   const clearDefaultExample = () => {
-    try { localStorage.removeItem('plotterlab:defaultPreset') } catch {}
+    try { localStorage.removeItem('plotterlab:defaultPreset'); showToast('Default example cleared') } catch {}
   }
   // First-launch: load default preset once if configured and no saved state yet
   useEffect(() => {
@@ -977,6 +542,22 @@ export default function App() {
   useEffect(() => { try { localStorage.setItem('plotterlab:doc', JSON.stringify(doc)) } catch(e){} }, [doc])
   useEffect(() => { try { localStorage.setItem('plotterlab:layers', JSON.stringify(layers)) } catch(e){} }, [layers])
 
+  // Layer action handlers
+  const addLayer = () => { setLayers(ls => [...ls, newLayer(ls.length)]); showToast('Layer added') }
+  const removeLayer = (id) => setLayers(ls => ls.filter(l => l.id !== id))
+  const toggleVisible = (id) => setLayers(ls => ls.map(l => l.id === id ? { ...l, visible: !l.visible } : l))
+  const moveLayer = (id, dir) => setLayers(ls => {
+    const idx = ls.findIndex(l => l.id === id)
+    if (idx < 0) return ls
+    const ni = dir < 0 ? Math.max(0, idx - 1) : Math.min(ls.length - 1, idx + 1)
+    if (ni === idx) return ls
+    const copy = ls.slice()
+    const [item] = copy.splice(idx, 1)
+    copy.splice(ni, 0, item)
+    return copy
+  })
+  const setAllLayersCollapsed = (flag) => setLayers(ls => ls.map(l => ({ ...l, uiCollapsed: !!flag })))
+
   // Presets: export/import
   const fileRef = useRef(null)
   const photoRef = useRef(null)
@@ -984,6 +565,8 @@ export default function App() {
   const imageRef = useRef(null)
   const [imageTargetLayerId, setImageTargetLayerId] = useState(null)
   const svgRef = useRef(null)
+  // Bitmap cache keyed by layerId for image-driven generators (e.g., halftone)
+  const [bitmaps, setBitmaps] = useState({})
   // Per-layer image loader handlers (Image Source group)
   const openImageForLayer = (layerId) => { setImageTargetLayerId(layerId); imageRef.current?.click() }
   const onImageFilePicked = async (e) => {
@@ -997,9 +580,93 @@ export default function App() {
       if (e.target) e.target.value = ''
     }
   }
+  // Load an image file into a target layer's bitmap slot and record imageInfo
+  const onLayerImageSelected = async (layerId, file) => {
+    if (!file) return
+    try {
+      const bmp = await fileToRGB(file, 800)
+      setBitmaps(m => ({ ...m, [layerId]: bmp }))
+      setLayers(ls => ls.map(l => l.id === layerId ? { ...l, params: { ...l.params, imageInfo: `${bmp.width}x${bmp.height}` } } : l))
+      showToast('Image loaded')
+    } catch (e) {
+      console.error('Image load failed', e)
+      showToast('Image load failed')
+    }
+  }
   const clearLayerImage = (layerId) => {
     setBitmaps(m => { const n = { ...m }; delete n[layerId]; return n })
     setLayers(ls => ls.map(l => l.id === layerId ? ({ ...l, params: { ...l.params, imageInfo: '' } }) : l))
+  }
+  // Photo -> Halftone import (Mono/CMYK)
+  const onPhotoSelected = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) { setPhotoMode(null); return }
+    try {
+      const bmp = await fileToRGB(file, 800)
+      if (photoMode === 'mono') {
+        const id = uid()
+        const layer = {
+          id,
+          name: 'Photo (Mono Halftone)',
+          color: '#111111',
+          visible: true,
+          generator: 'halftone',
+          params: { ...GENERATORS['halftone'].params, imageInfo: `${bmp.width}x${bmp.height}`, shape: 'lines', spacing: 1.2, segment: 0.4, angleDeg: 0, method: 'floyd' },
+          uiCollapsed: false
+        }
+        setLayers(ls => [...ls, layer])
+        setBitmaps(m => ({ ...m, [id]: { width: bmp.width, height: bmp.height, data: bmp.data } }))
+        showToast('Mono photo imported')
+      } else if (photoMode === 'cmyk') {
+        const { r: R, g: G, b: B } = bmp
+        const n = bmp.width * bmp.height
+        const Cb = new Float32Array(n)
+        const Mb = new Float32Array(n)
+        const Yb = new Float32Array(n)
+        const Kb = new Float32Array(n)
+        for (let i = 0; i < n; i++) {
+          const r = R[i], g = G[i], b = B[i]
+          const k = 1 - Math.max(r, g, b)
+          Kb[i] = k
+          if (k < 0.9999) {
+            const denom = 1 - k
+            Cb[i] = (1 - r - k) / denom
+            Mb[i] = (1 - g - k) / denom
+            Yb[i] = (1 - b - k) / denom
+          } else {
+            Cb[i] = 0; Mb[i] = 0; Yb[i] = 0
+          }
+        }
+        const mkLayer = (name, color, angle) => ({
+          id: uid(),
+          name: `Photo (${name})`,
+          color,
+          visible: true,
+          generator: 'halftone',
+          params: { ...GENERATORS['halftone'].params, imageInfo: `${bmp.width}x${bmp.height}`, shape: 'lines', spacing: 1.2, segment: 0.4, angleDeg: angle, method: 'floyd' },
+          uiCollapsed: false
+        })
+        const Lc = mkLayer('C', '#00AEEF', 15)
+        const Lm = mkLayer('M', '#EC008C', 75)
+        const Ly = mkLayer('Y', '#FFF200', 0)
+        const Lk = mkLayer('K', '#111111', 45)
+        setLayers(ls => [...ls, Lc, Lm, Ly, Lk])
+        setBitmaps(m => ({
+          ...m,
+          [Lc.id]: { width: bmp.width, height: bmp.height, data: Cb },
+          [Lm.id]: { width: bmp.width, height: bmp.height, data: Mb },
+          [Ly.id]: { width: bmp.width, height: bmp.height, data: Yb },
+          [Lk.id]: { width: bmp.width, height: bmp.height, data: Kb }
+        }))
+        showToast('CMYK photo imported')
+      }
+    } catch (err) {
+      console.error('Photo import failed', err)
+      showToast('Photo import failed')
+    } finally {
+      setPhotoMode(null)
+      if (e.target) e.target.value = ''
+    }
   }
   const stageRef = useRef(null)
   const fittingRef = useRef(false)
@@ -1339,6 +1006,12 @@ export default function App() {
     window.removeEventListener('mouseup', onMouseUpTransform)
   }
 
+  // Quasicrystal animation quick controls in toolbar (declare before effect dependencies)
+  const anyQc = useMemo(() => layers.some(l => l.generator === 'quasicrystalContours'), [layers])
+  const anyQcAnimating = useMemo(() => layers.some(l => l.generator === 'quasicrystalContours' && !!l.params?.animatePhase), [layers])
+  const toggleQcAnimate = () => setLayers(ls => ls.map(l => l.generator === 'quasicrystalContours' ? ({ ...l, params: { ...l.params, animatePhase: !l.params?.animatePhase } }) : l))
+  const resetQcPhase = () => setLayers(ls => ls.map(l => l.generator === 'quasicrystalContours' ? ({ ...l, params: { ...l.params, phase: 0 } }) : l))
+
   // Animate quasicrystal phase (preview only)
   useEffect(() => {
     let rafId = 0
@@ -1362,9 +1035,9 @@ export default function App() {
       })
       rafId = requestAnimationFrame(tick)
     }
-    if (doc.fastPreview) rafId = requestAnimationFrame(tick)
+    if (doc.fastPreview && anyQcAnimating) rafId = requestAnimationFrame(tick)
     return () => { try { cancelAnimationFrame(rafId) } catch {} }
-  }, [doc.fastPreview])
+  }, [doc.fastPreview, anyQcAnimating])
 
   // Compute a best-fit zoom to fill the visible container area
   const fitPreview = (force = false) => {
@@ -1497,6 +1170,40 @@ export default function App() {
     ro.observe(stageRef.current)
     return () => ro.disconnect()
   }, [stageRef, doc.previewAutoFit])
+  // Export all visible layers as individual SVG files (ZIP)
+  const downloadSVGs = () => {
+    setSaveMessage('Preparing SVGs...')
+    setIsSaving(true)
+    setSaveProgress(0)
+    setTimeout(async () => {
+      try {
+        const zip = new JSZip()
+        const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
+        for (const entry of full) {
+          if (!entry || !entry.layer || !entry.layer.visible) continue
+          const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
+          const d = planned.map(polylineToPath).join(' ')
+          const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed,
+            paths: [{ d, stroke: entry.layer.color, strokeWidth: doc.strokeWidth }] })
+          const safe = (entry.layer.name || 'layer').replace(/\s+/g, '_').replace(/[^A-Za-z0-9_\-]/g, '')
+          zip.file(`${safe}.svg`, svg)
+        }
+        setSaveMessage('Zipping SVGs...')
+        const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+          setSaveProgress(metadata.percent)
+        })
+        setSaveMessage('Saving file...')
+        saveAs(blob, `svgs_${doc.seed}.zip`)
+        showToast('SVG layers saved')
+      } catch (e) {
+        console.error('SVG export failed', e)
+        showToast('SVG export failed')
+      } finally {
+        setIsSaving(false)
+      }
+    }, 16)
+  }
+
   const exportPreset = () => {
     setSaveMessage('Saving preset...');
     setIsSaving(true);
@@ -1504,13 +1211,19 @@ export default function App() {
       const preset = { doc, layers }
       const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' })
       saveAs(blob, `preset_${doc.seed}.json`)
+      showToast('Preset saved')
     } catch (e) {
       console.error('Export preset failed', e)
+      showToast('Export preset failed')
     } finally {
       setIsSaving(false)
     }
   }
   const openImport = () => fileRef.current?.click()
+  const regenerateSeed = () => {
+    setDoc(d => ({ ...d, seed: Math.random().toString(36).slice(2, 10) }))
+    showToast('Seed randomized')
+  }
   const handleImport = async (e) => {
     const f = e.target.files?.[0]
     if (!f) return
@@ -1519,8 +1232,10 @@ export default function App() {
       const data = JSON.parse(text)
       if (data.doc) setDoc(d => ({ ...d, ...data.doc }))
       if (Array.isArray(data.layers)) setLayers(data.layers)
+      showToast('Preset loaded')
     } catch (err) {
       console.error('Import preset failed', err)
+      showToast('Import preset failed')
     } finally {
       e.target.value = ''
     }
@@ -1559,831 +1274,355 @@ export default function App() {
     return () => controller.abort()
   }, [layers])
 
-  const addLayer = () => setLayers(ls => [...ls, newLayer(ls.length)])
-  const removeLayer = (id) => setLayers(ls => ls.filter(l => l.id !== id))
-  const toggleVisible = (id) => setLayers(ls => ls.map(l => l.id === id ? { ...l, visible: !l.visible } : l))
 
-  const moveLayer = (id, dir) => setLayers(ls => {
-    const idx = ls.findIndex(l => l.id === id)
-    if (idx < 0) return ls
-    const ni = dir < 0 ? Math.max(0, idx - 1) : Math.min(ls.length - 1, idx + 1)
-    if (ni === idx) return ls
-    const copy = ls.slice()
-    const [item] = copy.splice(idx, 1)
-    copy.splice(ni, 0, item)
-    return copy
-  })
-
-  const regenerateSeed = () => setDoc(d => ({ ...d, seed: Math.random().toString(36).slice(2,10) }))
-
-  // UI helpers
-  const setAllLayersCollapsed = (flag) => setLayers(ls => ls.map(l => ({ ...l, uiCollapsed: !!flag })))
-
-  // Compute a separation that fits the requested number of iso lobes vertically within the page
-  const fitIsoSeparation = (layerId) => setLayers(ls => ls.map(l => {
-    if (l.id !== layerId || l.generator !== 'isoContours') return l
-    const lobes = Math.max(1, Math.floor(l.params?.lobes || 1))
-    const effMargin = Number.isFinite(l.params?.margin) ? l.params.margin : doc.margin
-    const H = Math.max(1, doc.height - 2 * effMargin)
-    const sigmaY = Number(l.params?.sigmaY || 55)
-    // Reserve a little headroom so outer rings don't clip; 3*sigmaY is a reasonable pad
-    const pad = Math.max(0, 3 * sigmaY)
-    const usable = Math.max(1, H - pad)
-    const sep = lobes <= 1 ? 0 : (usable / (lobes - 1))
-    return { ...l, params: { ...l.params, separation: Math.max(0, Math.round(sep)) } }
-  }))
-
-  // Per-layer SVG upload handler for svgImport generator
-  const onLayerSvgSelected = async (layerId, file) => {
-    if (!file) return
-    try {
-      const text = await file.text()
-      const layer = layers.find(l => l.id === layerId)
-      const det = layer?.params?.detail ?? 1
-      const parsed = extractPolylinesFromSvgText(text, { detail: det })
-      setLayers(ls => ls.map(l => l.id === layerId ? { ...l, params: { ...l.params, srcPolylines: parsed } } : l))
-    } catch (e) {
-      console.error('SVG parse failed', e)
-    }
-  }
-
-  // Transient image bitmaps for halftone (not saved to localStorage)
-  const [bitmaps, setBitmaps] = useState({})
-  const onLayerImageSelected = async (layerId, file) => {
-    if (!file) return
-    try {
-      // Load full RGB so we can split channels later; also includes grayscale in .data
-      const bmp = await fileToRGB(file, 800)
-      setBitmaps(m => ({ ...m, [layerId]: bmp }))
-      setLayers(ls => ls.map(l => l.id === layerId ? { ...l, params: { ...l.params, imageInfo: `${bmp.width}x${bmp.height}` } } : l))
-    } catch (e) {
-      console.error('Image load failed', e)
-    }
-  }
-
-  // Photo -> Halftone import (Mono/CMYK)
-  const onPhotoSelected = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) { setPhotoMode(null); return }
-    try {
-      const bmp = await fileToRGB(file, 800)
-      if (photoMode === 'mono') {
-        const id = uid()
-        const layer = {
-          id,
-          name: 'Photo (Mono Halftone)',
-          color: '#111111',
-          visible: true,
-          generator: 'halftone',
-          params: { ...GENERATORS['halftone'].params, imageInfo: `${bmp.width}x${bmp.height}`, shape: 'lines', spacing: 1.2, segment: 0.4, angleDeg: 0, method: 'floyd' },
-          uiCollapsed: false
-        }
-        setLayers(ls => [...ls, layer])
-        setBitmaps(m => ({ ...m, [id]: { width: bmp.width, height: bmp.height, data: bmp.data } }))
-      } else if (photoMode === 'cmyk') {
-        const N = bmp.r.length
-        const Cb = new Float32Array(N)
-        const Mb = new Float32Array(N)
-        const Yb = new Float32Array(N)
-        const Kb = new Float32Array(N)
-        for (let i=0;i<N;i++) {
-          const r = bmp.r[i], g = bmp.g[i], b = bmp.b[i]
-          const c1 = 1 - r, m1 = 1 - g, y1 = 1 - b
-          const k = Math.min(c1, m1, y1)
-          const denom = (1 - k) || 1e-6
-          const c = (c1 - k) / denom
-          const m = (m1 - k) / denom
-          const y = (y1 - k) / denom
-          // Convert ink density to brightness for halftone (1 - density)
-          Cb[i] = 1 - c
-          Mb[i] = 1 - m
-          Yb[i] = 1 - y
-          Kb[i] = 1 - k
-        }
-        // Helper to create a halftone layer with a standard CMYK screen angle
-        const mkLayer = (suffix, color, angleDeg) => ({
-          id: uid(),
-          name: `Photo (${suffix})`,
-          color,
-          visible: true,
-          generator: 'halftone',
-          params: { ...GENERATORS['halftone'].params, imageInfo: `${bmp.width}x${bmp.height}`, shape: 'lines', spacing: 1.4, segment: 0.4, angleDeg, method: 'floyd' },
-          uiCollapsed: false
-        })
-        const Lc = mkLayer('C', '#00AEEF', 15)
-        const Lm = mkLayer('M', '#EC008C', 75)
-        const Ly = mkLayer('Y', '#FFF200', 0)
-        const Lk = mkLayer('K', '#111111', 45)
-        setLayers(ls => [...ls, Lc, Lm, Ly, Lk])
-        setBitmaps(m => ({
-          ...m,
-          [Lc.id]: { width: bmp.width, height: bmp.height, data: Cb },
-          [Lm.id]: { width: bmp.width, height: bmp.height, data: Mb },
-          [Ly.id]: { width: bmp.width, height: bmp.height, data: Yb },
-          [Lk.id]: { width: bmp.width, height: bmp.height, data: Kb }
-        }))
-      }
-    } catch (err) {
-      console.error('Photo import failed', err)
-    } finally {
-      setPhotoMode(null)
-      if (e.target) e.target.value = ''
-    }
-  }
-
-  // Split a Halftone layer's image bitmap into three RGB layers
-  const splitHalftoneToRGB = (layerId) => setLayers(ls => {
-    const idx = ls.findIndex(l => l.id === layerId)
-    if (idx < 0) return ls
-    const base = ls[idx]
-    const bm = bitmaps[base.id]
-    if (!bm || !bm.r || !bm.g || !bm.b) return ls
-    const mk = (name, color, data) => {
-      const id = uid()
-      const lyr = { ...base, id, name, color }
-      // ensure params shallow copy
-      lyr.params = { ...base.params }
-      // store per-layer bitmap brightness channel (0=black -> draw more)
-      setBitmaps(m => ({ ...m, [id]: { width: bm.width, height: bm.height, data } }))
-      return lyr
-    }
-    // For halftone, bitmap.data is interpreted as brightness g in [0,1].
-    // To generate more ink where channel is strong, we convert channel value to brightness via (1 - channel).
-    const Rb = new Float32Array(bm.r.length); for (let i=0;i<Rb.length;i++) Rb[i] = 1 - bm.r[i]
-    const Gb = new Float32Array(bm.g.length); for (let i=0;i<Gb.length;i++) Gb[i] = 1 - bm.g[i]
-    const Bb = new Float32Array(bm.b.length); for (let i=0;i<Bb.length;i++) Bb[i] = 1 - bm.b[i]
-    const Lr = mk(`${base.name} (R)`, '#ff3b30', Rb)
-    const Lg = mk(`${base.name} (G)`, '#34c759', Gb)
-    const Lb = mk(`${base.name} (B)`, '#0a84ff', Bb)
-    const out = ls.slice()
-    out.splice(idx + 1, 0, Lr, Lg, Lb)
-    return out
-  })
-
-  // Split a Halftone layer's image into CMYK layers using simple conversion
-  const splitHalftoneToCMYK = (layerId) => setLayers(ls => {
-    const idx = ls.findIndex(l => l.id === layerId)
-    if (idx < 0) return ls
-    const base = ls[idx]
-    const bm = bitmaps[base.id]
-    if (!bm || !bm.r || !bm.g || !bm.b) return ls
-    const N = bm.r.length
-    const Cb = new Float32Array(N)
-    const Mb = new Float32Array(N)
-    const Yb = new Float32Array(N)
-    const Kb = new Float32Array(N)
-    for (let i=0;i<N;i++) {
-      const r = bm.r[i], g = bm.g[i], b = bm.b[i]
-      const c1 = 1 - r, m1 = 1 - g, y1 = 1 - b
-      const k = Math.min(c1, m1, y1)
-      const denom = (1 - k) || 1e-6
-      const c = (c1 - k) / denom
-      const m = (m1 - k) / denom
-      const y = (y1 - k) / denom
-      // Convert ink density to brightness for halftone (1 - density)
-      Cb[i] = 1 - c
-      Mb[i] = 1 - m
-      Yb[i] = 1 - y
-      Kb[i] = 1 - k
-    }
-    const mk = (name, color, data) => {
-      const id = uid()
-      const lyr = { ...base, id, name, color }
-      lyr.params = { ...base.params }
-      setBitmaps(m => ({ ...m, [id]: { width: bm.width, height: bm.height, data } }))
-      return lyr
-    }
-    const Lc = mk(`${base.name} (C)`, '#00AEEF', Cb)
-    const Lm = mk(`${base.name} (M)`, '#EC008C', Mb)
-    const Ly = mk(`${base.name} (Y)`, '#FFF200', Yb)
-    const Lk = mk(`${base.name} (K)`, '#111111', Kb)
-    const out = ls.slice()
-    out.splice(idx + 1, 0, Lc, Lm, Ly, Lk)
-    return out
-  })
-
-  // Scale selected generator parameters for fast preview
-  const scaleParamsForPreview = (genKey, params, q) => {
-    if (!q || q >= 0.999) return params
-    const keysToScaleInt = {
-      spirograph: ['turns'],
-      flowField: ['steps','cols','rows'],
-      retroPipes: ['steps','runs'],
-      mdiIconField: ['samples'],
-      mdiPattern: ['samples'],
-      voronoiShatter: ['cells'],
-      pixelMosaic: ['cols','rows'],
-      isometricCity: ['cols','rows'],
-      isoContours: ['levels','cols','rows'],
-      superformulaRings: ['rings','steps'],
-      waveMoire: ['lines'],
-      streamlines: ['seedsX','seedsY','maxSteps'],
-      reactionContours: ['cols','rows','steps'],
-      quasicrystalContours: ['cols','rows'],
-      stripeBands: ['cols','rows','levels'],
-    }
-    const k = keysToScaleInt[genKey] || []
-    const out = { ...params }
-    for (const name of k) {
-      if (typeof out[name] === 'number' && Number.isFinite(out[name])) {
-        const v = Math.max(1, Math.floor(out[name] * q))
-        out[name] = v
-      }
-    }
-    // Some non-integer tweaks per generator (keep conservative)
-    if (genKey === 'hatchFill' && typeof out.spacing === 'number') {
-      out.spacing = Math.max(0.1, out.spacing / Math.max(0.5, q)) // larger spacing => fewer lines
-    }
-    return out
-  }
-
-  // Shared renderer used for preview and for full-quality exports (wrapper)
-  const computeRendered = (...args) => renderAll(...args)
-
-  // Preview rendering off the main thread via Web Worker
+  // Preview rendering with progress (off-main-thread via Web Worker when available)
   const [rendered, setRendered] = useState([])
-  const [renderedPaths, setRenderedPaths] = useState([])
   const [previewProgress, setPreviewProgress] = useState(0)
-  const [previewRunning, setPreviewRunning] = useState(false)
   const [previewDetail, setPreviewDetail] = useState(null)
   const [progressVisible, setProgressVisible] = useState(false)
-  const workerRef = useRef(null)
-  const jobRef = useRef(null)
-  // Preview watchdog and quality override for resilience
-  const watchdogRef = useRef(null)
-  const lastProgressAtRef = useRef(0)
-  const qualityOverrideRef = useRef(null)
   const [previewNonce, setPreviewNonce] = useState(0)
-  const isCanceledRef = useRef(false)
-  useEffect(() => {
-    // Delay showing the progress UI to avoid flicker while dragging sliders
-    let timer = null
-    if (previewRunning || (previewProgress > 0 && previewProgress < 1)) {
-      timer = setTimeout(() => setProgressVisible(true), 250)
-    } else {
-      setProgressVisible(false)
-    }
-    return () => { if (timer) clearTimeout(timer) }
-  }, [previewRunning, previewProgress])
+  const workerRef = useRef(null)
+  const jobIdRef = useRef(0)
+  const [workerPaths, setWorkerPaths] = useState(null)
+  const lastPathsRef = useRef([])
+  const lastEstimateRef = useRef({ drawLen: 0, travelLen: 0, totalLen: 0, drawMin: 0, travelMin: 0, totalMin: 0, fmt: (m)=>`${Math.floor(m)}m 0s`, penLifts: 0 })
+  const resetPreview = () => {
+    try { if (workerRef.current) { workerRef.current.terminate(); workerRef.current = null } } catch {}
+    setWorkerPaths(null)
+    setPreviewNonce(n => n + 1)
+    setProgressVisible(false)
+  }
+  const cancelPreview = () => {
+    try { if (workerRef.current) { workerRef.current.terminate(); workerRef.current = null } } catch {}
+    setProgressVisible(false)
+  }
 
+  const previewQuality = useMemo(() => (doc.fastPreview ? Math.max(0.2, Math.min(1, Number(doc.previewQuality) || 0.6)) : 1), [doc.fastPreview, doc.previewQuality])
+  // Debounced inputs for heavy computation; prefer Web Worker
   useEffect(() => {
-    if (!workerRef.current) {
-      workerRef.current = new Worker(new URL('./lib/previewWorker.js', import.meta.url), { type: 'module' })
-      workerRef.current.onmessage = (e) => {
-        const { id, type, outputs, paths, progress, message } = e.data || {}
-        if (id && jobRef.current && id !== jobRef.current) return
-        if (type === 'progress') {
-          setPreviewProgress(progress || 0)
-          if (e.data && e.data.detail) setPreviewDetail(e.data.detail)
-          // Reset watchdog on progress
-          lastProgressAtRef.current = Date.now()
-          if (watchdogRef.current) clearTimeout(watchdogRef.current)
-          watchdogRef.current = setTimeout(() => {
-            // If the same job is still running without progress, restart at a safer quality
-            if (jobRef.current === id && !isCanceledRef.current) {
-              try { workerRef.current?.terminate() } catch {}
-              workerRef.current = null
-              setPreviewRunning(false)
-              setPreviewProgress(0)
-              setPreviewDetail(null)
-              // Lower effective preview quality for retry (does not change saved settings)
-              const base = (doc.fastPreview ? (doc.previewQuality ?? 0.6) : 1)
-              qualityOverrideRef.current = Math.max(0.35, Math.min(1, base * 0.75))
-              setPreviewNonce(n => n + 1)
-            }
-          }, 12000)
-        } else if (type === 'done') {
-          setRendered(outputs || [])
-          setRenderedPaths(paths || [])
-          setPreviewProgress(1)
-          setPreviewRunning(false)
-          setPreviewDetail(null)
-          if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null }
-          // Clear any temporary quality override after a successful run
-          qualityOverrideRef.current = null
-        } else if (type === 'error') {
-          console.error('Preview worker error:', message)
-          setRendered([])
-          setRenderedPaths([])
-          setPreviewProgress(1)
-          setPreviewRunning(false)
-          setPreviewDetail(null)
-          if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null }
+    let cancelled = false
+    const id = ++jobIdRef.current
+    setWorkerPaths(null)
+    setProgressVisible(true)
+    setPreviewProgress(0)
+    setPreviewDetail(null)
+    // Try worker first
+    try {
+      const w = new Worker(new URL('./lib/previewWorker.js', import.meta.url), { type: 'module' })
+      workerRef.current = w
+      const lastProgressUpdateRef = { t: 0, p: -1 }
+      w.onmessage = (e) => {
+        const msg = e.data || {}
+        if (msg.id !== id) return // stale
+        if (msg.type === 'progress') {
+          if (cancelled) return
+          const pct = Math.max(0, Math.min(1, Number(msg.progress) || 0))
+          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+          if ((now - lastProgressUpdateRef.t) > 80 || Math.abs(pct - lastProgressUpdateRef.p) > 0.02) {
+            lastProgressUpdateRef.t = now; lastProgressUpdateRef.p = pct
+            setPreviewProgress(pct)
+          }
+          if (msg.detail) setPreviewDetail({ idx: Math.round(Number(msg.detail.idx) || 0), total: Math.round(Number(msg.detail.total) || 0), layerName: msg.detail.layerName || '', layerId: msg.detail.layerId || null })
+        } else if (msg.type === 'done') {
+          if (cancelled) return
+          setRendered(Array.isArray(msg.outputs) ? msg.outputs : [])
+          setWorkerPaths(Array.isArray(msg.paths) ? msg.paths : null)
+          if (Array.isArray(msg.paths)) lastPathsRef.current = msg.paths
+          setProgressVisible(false)
+          try { w.terminate() } catch {}
+          if (workerRef.current === w) workerRef.current = null
+        } else if (msg.type === 'error') {
+          console.error('Preview worker error:', msg.message)
+          if (!cancelled) setProgressVisible(false)
+          try { w.terminate() } catch {}
+          if (workerRef.current === w) workerRef.current = null
         }
       }
-    }
-    const qual = doc.fastPreview ? (doc.previewQuality ?? 0.6) : 1
-    const effQual = Math.max(0.2, Math.min(1, qualityOverrideRef.current || qual))
-    const id = uid()
-    jobRef.current = id
-    setPreviewProgress(0)
-    setPreviewRunning(true)
-    setPreviewDetail(null)
-    isCanceledRef.current = false
-    workerRef.current.postMessage({
-      id,
-      layers: dLayers,
-      doc: dDoc,
-      mdiCache,
-      bitmaps,
-      quality: effQual,
-      optimizeJoin: doc.optimizeJoin
-    })
-    // Arm watchdog in case no progress arrives at all
-    lastProgressAtRef.current = Date.now()
-    if (watchdogRef.current) clearTimeout(watchdogRef.current)
-    watchdogRef.current = setTimeout(() => {
-      if (jobRef.current === id && !isCanceledRef.current) {
-        try { workerRef.current?.terminate() } catch {}
-        workerRef.current = null
-        setPreviewRunning(false)
-        setPreviewProgress(0)
-        setPreviewDetail(null)
-        const base = (doc.fastPreview ? (doc.previewQuality ?? 0.6) : 1)
-        qualityOverrideRef.current = Math.max(0.35, Math.min(1, base * 0.75))
-        setPreviewNonce(n => n + 1)
+      w.postMessage({ id, layers: dLayers, doc: (dDoc || doc), mdiCache, bitmaps, quality: previewQuality, optimizeJoin: !!doc.optimizeJoin })
+      return () => {
+        cancelled = true
+        try { if (workerRef.current) { workerRef.current.terminate(); workerRef.current = null } } catch {}
       }
-    }, 12000)
-  }, [dLayers, dDoc, mdiCache, bitmaps, doc.fastPreview, doc.previewQuality, previewNonce])
-  useEffect(() => () => {
-    try { workerRef.current?.terminate() } catch(e){}
-    if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null }
-  }, [])
-
-  // Manual Reset Preview action (UI)
-  const resetPreview = () => {
-    qualityOverrideRef.current = null
-    try { workerRef.current?.terminate() } catch {}
-    workerRef.current = null
-    setPreviewRunning(false)
-    setPreviewProgress(0)
-    setPreviewDetail(null)
-    isCanceledRef.current = false
-    setPreviewNonce(n => n + 1)
-  }
-
-  // Manual Cancel Preview action (UI)
-  const cancelPreview = () => {
-    isCanceledRef.current = true
-    qualityOverrideRef.current = null
-    try { workerRef.current?.terminate() } catch {}
-    workerRef.current = null
-    setPreviewRunning(false)
-    setPreviewProgress(0)
-    setPreviewDetail(null)
-    if (watchdogRef.current) { clearTimeout(watchdogRef.current); watchdogRef.current = null }
-  }
-
-  const memoSvgPaths = useMemo(() => {
-    const arr = Array.isArray(rendered) ? rendered : []
-    return arr.map(({ layer, polylines }) => ({ layer, d: (polylines || []).map(polylineToPath).join(' ') }))
-  }, [rendered])
-  const svgPaths = (Array.isArray(renderedPaths) && renderedPaths.length) ? renderedPaths : memoSvgPaths
-
-
-  const viewBox = useMemo(() => {
-    const z = Math.max(0.2, doc.previewZoom || 1)
-    const vw = doc.width / z
-    const vh = doc.height / z
-    const minX = (doc.previewPanX || 0)
-    const minY = (doc.previewPanY || 0)
-    return `${minX} ${minY} ${vw} ${vh}`
-  }, [doc.width, doc.height, doc.previewZoom, doc.previewPanX, doc.previewPanY])
-
-  const finalPolylinesForStats = useMemo(() => {
-    if (previewRunning) return []
-    const all = rendered.flatMap(r => r.layer.visible ? r.polylines : [])
-    if (all.length === 0) return []
-    let polys = orderPolylines(all, doc.optimize, doc.startX, doc.startY)
-    if (doc.optimizeJoin) {
-      polys = joinPolylines(polys)
+    } catch (err) {
+      console.warn('Worker preview unavailable; falling back to main thread', err)
+      // Fallback to main-thread compute (debounced inputs mitigate hitching)
+      try {
+        const outs = renderAll(dLayers, dDoc || doc, mdiCache, bitmaps, previewQuality, (p) => {
+          if (cancelled) return
+          const pct = Math.max(0, Math.min(1, Number(p?.pct) || 0))
+          setPreviewProgress(pct)
+          setPreviewDetail({ idx: Math.round(Number(p?.idx) || 0), total: Math.round(Number(p?.total) || 0), layerName: p?.layerName || '', layerId: p?.layerId || null })
+        })
+        if (!cancelled) setRendered(outs)
+      } catch (e) {
+        console.error('Preview render failed', e)
+        if (!cancelled) setRendered([])
+      } finally {
+        if (!cancelled) setProgressVisible(false)
+      }
+      return () => { cancelled = true }
     }
-    return polys
-  }, [rendered, doc.optimize, doc.optimizeJoin, doc.startX, doc.startY, previewRunning])
+  }, [dLayers, dDocSig, mdiCache, bitmaps, previewQuality, previewNonce, doc.optimizeJoin])
 
+  // Path data for SVG preview by layer (post planning)
+  const svgPaths = useMemo(() => {
+    if (Array.isArray(workerPaths) && workerPaths.length) return workerPaths.filter(p => p?.layer?.visible)
+    if (progressVisible) return Array.isArray(lastPathsRef.current) ? lastPathsRef.current.filter(p => p?.layer?.visible) : []
+    const out = []
+    for (const entry of rendered) {
+      if (!entry?.layer?.visible) continue
+      const planned = applyPathPlanning(entry.polylines || [], doc, doc.optimizeJoin)
+      const d = planned.map(polylineToPath).join(' ')
+      out.push({ layer: entry.layer, d })
+    }
+    return out
+  }, [progressVisible, workerPaths, rendered, doc.optimizeJoin, doc.width, doc.height, doc.strokeWidth])
+
+  // Overlay of order numbers (uses planned order)
   const overlayOrder = useMemo(() => {
-    // Only compute heavy ordering when strictly needed and when preview is idle
-    if (!(doc.showOrderNumbers || doc.showTravel)) return []
-    if (previewRunning) return []
-    const all = rendered.flatMap(r => r.layer.visible ? r.polylines : [])
-    if (all.length === 0) return []
-    // Downsample for preview if too many polylines (e.g., halftone): keeps UI snappy
-    const MAX_PREVIEW_POLYS = 2500
-    let polys = all
-    if (all.length > MAX_PREVIEW_POLYS) {
-      const stride = Math.max(1, Math.ceil(all.length / MAX_PREVIEW_POLYS))
-      polys = all.filter((_, i) => (i % stride) === 0)
+    if (!doc.showOrderNumbers) return []
+    const out = []
+    for (const entry of rendered) {
+      if (!entry?.layer?.visible) continue
+      const planned = applyPathPlanning(entry.polylines || [], doc, doc.optimizeJoin)
+      for (const p of planned) out.push(p)
     }
-    // Prefer faster method for preview when very large
-    const method = (doc.optimize === 'nearest+improve' && polys.length > 2000) ? 'nearest' : doc.optimize
-    return orderPolylines(polys, method, doc.startX, doc.startY)
-  }, [rendered, doc.optimize, doc.startX, doc.startY, doc.showOrderNumbers, doc.showTravel, previewRunning])
+    return out
+  }, [rendered, doc.showOrderNumbers, doc.optimizeJoin])
 
-  // Build a lightweight travel preview path from the ordered polylines
-  const travelD = useMemo(() => {
-    if (!doc.showTravel || previewRunning) return ''
-    try {
-      if (!overlayOrder || overlayOrder.length === 0) return ''
-      const segs = []
-      if (overlayOrder[0] && overlayOrder[0].length) {
-        segs.push(`M ${doc.startX} ${doc.startY} L ${overlayOrder[0][0][0]} ${overlayOrder[0][0][1]}`)
-      }
-      for (let i = 0; i < overlayOrder.length - 1; i++) {
-        const a = overlayOrder[i]
-        const b = overlayOrder[i+1]
-        if (!a.length || !b.length) continue
-        const p = a[a.length - 1]
-        const q = b[0]
-        segs.push(`M ${p[0]} ${p[1]} L ${q[0]} ${q[1]}`)
-      }
-      return segs.join(' ')
-    } catch {
-      return ''
+  // Travel path overlay (optional). For now, no-op unless implemented.
+  const travelD = useMemo(() => '', [rendered, doc.optimizeJoin])
+
+  // Stats overlay
+  const statsCounts = useMemo(() => {
+    let polys = 0, segs = 0
+    for (const r of rendered) {
+      polys += (r.polylines?.length || 0)
+      for (const p of (r.polylines || [])) segs += Math.max(0, p.length - 1)
     }
-  }, [overlayOrder, doc.showTravel, doc.startX, doc.startY, previewRunning])
+    return { polys, segs }
+  }, [rendered])
 
-  // Dynamic contrast for G-code toggle chip
-  const lumaOfHex = (hex) => {
-    if (!hex || typeof hex !== 'string') return 0
-    const s = hex.trim().replace('#','')
-    const v = s.length===3 ? s.split('').map(c=>c+c).join('') : s
-    const r = parseInt(v.slice(0,2),16)||0, g=parseInt(v.slice(2,4),16)||0, b=parseInt(v.slice(4,6),16)||0
-    // relative luminance (sRGB)
-    const toLin = (u)=>{u/=255;return u<=0.03928?u/12.92:Math.pow((u+0.055)/1.055,2.4)}
-    const L = 0.2126*toLin(r)+0.7152*toLin(g)+0.0722*toLin(b)
-    return L
-  }
-  const gcodeChipStyle = useMemo(() => {
-    const bgL = lumaOfHex(doc.bg)
-    const appL = lumaOfHex(doc.appBg)
-    const lightBackgroundLikely = Math.max(bgL, appL) > 0.6
-    return lightBackgroundLikely
-      ? { backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', borderColor: 'rgba(255,255,255,0.35)', backdropFilter: 'blur(2px)' }
-      : { backgroundColor: 'rgba(34,211,238,0.85)', color: '#0b0f14', borderColor: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(2px)' }
-  }, [doc.bg, doc.appBg])
-
-  // Grid dot color adapts to background so grid is visible on light or dark themes
+  // ViewBox + styling helpers
+  const viewBox = useMemo(() => `0 0 ${doc.width} ${doc.height}`, [doc.width, doc.height])
+  const gcodeChipStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', borderColor: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(2px)' }), [])
+  // Grid colors and lines
   const gridDotColor = useMemo(() => {
-    const bgL = lumaOfHex(doc.appBg)
-    const paperL = lumaOfHex(doc.bg)
-    const baseL = Math.max(bgL, paperL)
-    return baseL > 0.6 ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.10)'
-  }, [doc.appBg, doc.bg])
-
-  // Grid data for SVG overlay (drawn over paper rect so it's visible on page)
+    // Simple luminance check on app background to pick contrasting grid
+    const hex = String(doc.appBg || '#1f2937').replace('#','')
+    const r = parseInt(hex.slice(0,2), 16) || 31
+    const g = parseInt(hex.slice(2,4), 16) || 41
+    const b = parseInt(hex.slice(4,6), 16) || 55
+    const lum = 0.2126*(r/255) + 0.7152*(g/255) + 0.0722*(b/255)
+    return lum < 0.5 ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.35)'
+  }, [doc.appBg])
   const gridData = useMemo(() => {
     if (!doc.showGrid) return null
-    const step = Math.max(2, Math.round(Number(doc.gridSizePx || 12)))
+    const step = Math.max(2, Number(doc.gridSizePx) || 12)
     const vx = []
-    for (let x = 0; x <= doc.width + 1e-6; x += step) vx.push(Math.round(x))
     const hy = []
+    for (let x = 0; x <= doc.width + 1e-6; x += step) vx.push(Math.round(x))
     for (let y = 0; y <= doc.height + 1e-6; y += step) hy.push(Math.round(y))
-    return { step, vx, hy }
+    // Ensure edges are present
+    if (vx[0] !== 0) vx.unshift(0)
+    if (vx[vx.length-1] !== doc.width) vx.push(doc.width)
+    if (hy[0] !== 0) hy.unshift(0)
+    if (hy[hy.length-1] !== doc.height) hy.push(doc.height)
+    return { vx, hy }
   }, [doc.showGrid, doc.gridSizePx, doc.width, doc.height])
 
-  // Compact label helpers for sidebar forms
-  const labelClass = superCompact
-    ? 'flex flex-col gap-0 capitalize text-[11px]'
-    : (compactUI ? 'flex flex-col gap-0.5 capitalize text-xs' : 'flex flex-col gap-1 capitalize')
-  const labelRowClass = superCompact
-    ? 'flex items-center gap-1 capitalize text-[11px]'
-    : (compactUI ? 'flex items-center gap-1 capitalize text-xs' : 'flex items-center gap-2 capitalize')
-
-  // Mini-accordion helpers per layer/group
-  const isGroupOpen = (layerId, key) => (groupOpen[`${layerId}:${key}`] ?? true)
-  const toggleGroup = (layerId, key) => setGroupOpen(s => ({ ...s, [`${layerId}:${key}`]: !(s[`${layerId}:${key}`] ?? true) }))
-
-  // Helper to render a numeric param input bound to a specific layer/param key
-  const renderNumParam = (layer, k, labelText) => {
-    const def = (GENERATORS[layer.generator]?.params || {})[k]
-    const editKey = `L:${layer.id}:${k}`
-    const displayVal = (numEdit && Object.prototype.hasOwnProperty.call(numEdit, editKey))
-      ? numEdit[editKey]
-      : String(layer.params[k] ?? def)
-    return (
-      <label key={`g_${k}`} className={labelClass}>
-        {labelText || k}
-        <input className="input" type="text" inputMode="decimal" value={displayVal}
-          onChange={e=>{
-            const txt = e.target.value
-            setNumEdit(m=>({ ...m, [editKey]: txt }))
-            const v = parseFloat(txt)
-            if (txt !== '' && Number.isFinite(v)) {
-              setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,[k]: v}}:l))
-            }
-          }}
-          onBlur={()=>{
-            setNumEdit(m=>{ const n={...m}; delete n[editKey]; return n })
-          }}
-        />
-      </label>
-    )
-  }
-
-  // Selection overlay for transform gizmo
-  const transformOverlay = useMemo(() => {
-    if (!transform.active || !transform.layerId) return null
-    const entry = rendered.find(r => r.layer.id === transform.layerId)
-    if (!entry || !entry.polylines || entry.polylines.length === 0) return null
-    // inline bounds to avoid referencing later-declared const
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const p of entry.polylines) {
-      for (const [x,y] of p) {
-        if (!Number.isFinite(x) || !Number.isFinite(y)) continue
-        if (x < minX) minX = x
-        if (y < minY) minY = y
-        if (x > maxX) maxX = x
-        if (y > maxY) maxY = y
+  // Length and time estimate for G-code panel
+  const lengthEstimate = useMemo(() => {
+    if (progressVisible && lastEstimateRef.current) return lastEstimateRef.current
+    // Planned polylines across all visible layers in order
+    const plannedAll = []
+    for (const entry of rendered) {
+      if (!entry?.layer?.visible) continue
+      const planned = applyPathPlanning(entry.polylines || [], doc, doc.optimizeJoin)
+      for (const p of planned) plannedAll.push(p)
+    }
+    const dist = (a,b) => Math.hypot((b[0]-a[0])||0, (b[1]-a[1])||0)
+    let drawLen = 0
+    for (const poly of plannedAll) {
+      for (let i=0;i<(poly.length-1);i++) drawLen += dist(poly[i], poly[i+1])
+    }
+    let travelLen = 0
+    for (let i=0;i<(plannedAll.length-1);i++) {
+      const A = plannedAll[i], B = plannedAll[i+1]
+      if (A.length && B.length) travelLen += dist(A[A.length-1], B[0])
+    }
+    const totalLen = drawLen + travelLen
+    const feed = Math.max(1, Number(doc.feed)||1800)
+    const travel = Math.max(1, Number(doc.travel)||3000)
+    const drawMin = drawLen / feed
+    const travelMin = travelLen / travel
+    const totalMin = drawMin + travelMin
+    const fmt = (mins) => {
+      const m = Math.floor(mins)
+      const s = Math.round((mins - m) * 60)
+      if (m >= 60) {
+        const h = Math.floor(m / 60)
+        const mm = m % 60
+        return `${h}h ${mm}m`
       }
+      return `${m}m ${s}s`
     }
-    if (minX === Infinity) return null
-    const b = { minX, minY, maxX, maxY }
-    const cx = (b.minX + b.maxX) / 2
-    const cy = (b.minY + b.maxY) / 2
-    const topMid = [(b.minX+b.maxX)/2, b.minY]
-    const rot = [topMid[0], Math.max(0, b.minY - Math.max(10, (b.maxY-b.minY)*0.08))]
-    return { b, cx, cy, rot }
-  }, [transform, rendered])
+    const penLifts = Math.max(0, plannedAll.length - 1)
+    const est = { drawLen, travelLen, totalLen, drawMin, travelMin, totalMin, fmt, penLifts }
+    lastEstimateRef.current = est
+    return est
+  }, [progressVisible, rendered, doc.optimizeJoin, doc.feed, doc.travel])
 
-  // HUD helpers for quasicrystal animation
-  const anyQc = useMemo(() => layers.some(l => l.generator === 'quasicrystalContours'), [layers])
-  const anyQcAnimating = useMemo(() => layers.some(l => l.generator === 'quasicrystalContours' && l.params?.animatePhase), [layers])
-  const toggleQcAnimate = () => setLayers(ls => ls.map(l => l.generator === 'quasicrystalContours' ? { ...l, params: { ...l.params, animatePhase: !anyQcAnimating } } : l))
-  const resetQcPhase = () => setLayers(ls => ls.map(l => l.generator === 'quasicrystalContours' ? { ...l, params: { ...l.params, phase: 0 } } : l))
-
-  // Overlay indices for clip source polygons when a layer uses Clip Mode = 'index'
-  const centroidOfPoly = (p) => {
-    // p is closed (first==last). Use polygon centroid formula.
-    let a = 0, cx = 0, cy = 0
-    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
-      const x0 = p[j][0], y0 = p[j][1]
-      const x1 = p[i][0], y1 = p[i][1]
-      const f = (x0 * y1 - x1 * y0)
-      a += f
-      cx += (x0 + x1) * f
-      cy += (y0 + y1) * f
-    }
-    a *= 0.5
-    if (Math.abs(a) < 1e-6) return [p[0][0], p[0][1]]
-    cx /= (6 * a)
-    cy /= (6 * a)
-    return [cx, cy]
-  }
-  const closedPolys = (polys) => polys.filter(pp => pp && pp.length >= 3).map(pp => {
-    const a = pp[0], b = pp[pp.length - 1]
-    const dx = a[0] - b[0], dy = a[1] - b[1]
-    if (dx*dx + dy*dy > 1e-6) return [...pp, pp[0]]
-    return pp
-  }).filter(pp => pp.length >= 4)
-
-  // Stitch -> auto-close -> stable-sort polygons just like renderer.makeClipPolys
+  // Clip overlays for picking closed polygons on a source layer
   const makeClipPolysLocal = (polys) => {
     const dist2 = (a, b) => { const dx = a[0]-b[0], dy = a[1]-b[1]; return dx*dx+dy*dy }
-    const isClosed = (p, eps2 = 1e-4) => p.length>=3 && dist2(p[0], p[p.length-1]) <= eps2
-    const eps2 = 0.64 // ~0.8mm threshold; match renderer
-    const closed = []
-    const opens = []
+    const isClosed = (p, eps2 = 0.64) => p.length>=3 && dist2(p[0], p[p.length-1]) <= eps2
+    const out = []
     for (const p of (polys||[])) {
       if (!p || p.length < 2) continue
-      if (isClosed(p, eps2)) {
-        if (dist2(p[0], p[p.length-1]) > 1e-6) { const q = p.slice(); q.push(q[0]); if (q.length>=4) closed.push(q) }
-        else closed.push(p)
-      } else {
-        opens.push(p.slice())
+      if (isClosed(p)) { const q = p.slice(); if (dist2(q[0], q[q.length-1])>1e-6) q.push(q[0]); if (q.length>=4) out.push(q) }
+      else if (p.length >= 3) { const q = p.slice(); if (dist2(q[0], q[q.length-1])>1e-6) q.push(q[0]); if (q.length>=4) out.push(q) }
+    }
+    // Sort by centroid for stable indices
+    const centroid = (poly) => {
+      let a = 0, cx = 0, cy = 0
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const x0 = poly[j][0], y0 = poly[j][1]
+        const x1 = poly[i][0], y1 = poly[i][1]
+        const f = (x0 * y1 - x1 * y0)
+        a += f; cx += (x0 + x1) * f; cy += (y0 + y1) * f
       }
+      a *= 0.5
+      if (Math.abs(a) < 1e-6) return [poly[0][0], poly[0][1]]
+      return [cx / (6 * a), cy / (6 * a)]
     }
-    // Do not cross-stitch separate opens; only auto-close any single open loops.
-    for (const O of opens) {
-      if (!O || O.length < 3) continue
-      const q = O.slice()
-      if (dist2(q[0], q[q.length-1]) > 1e-6) q.push(q[0])
-      if (q.length >= 4) closed.push(q)
-    }
-    const out = closed.filter(pp => pp.length >= 4)
-    const centroid = (p) => { let a=0,cx=0,cy=0; for(let i=0,j=p.length-1;i<p.length;j=i++){const x0=p[j][0],y0=p[j][1],x1=p[i][0],y1=p[i][1]; const f=(x0*y1-x1*y0); a+=f; cx+=(x0+x1)*f; cy+=(y0+y1)*f } a*=0.5; if (Math.abs(a)<1e-6) return [p[0][0], p[0][1]]; return [cx/(6*a), cy/(6*a)] }
-    const areaAbs = (p)=>{ let a=0; for(let i=0,j=p.length-1;i<p.length;j=i++){ a += (p[j][0]*p[i][1] - p[i][0]*p[j][1]) } return Math.abs(a*0.5) }
-    out.sort((A,B)=>{ const ca=centroid(A), cb=centroid(B); if (Math.abs(ca[0]-cb[0])>1e-6) return ca[0]-cb[0]; if (Math.abs(ca[1]-cb[1])>1e-6) return ca[1]-cb[1]; return areaAbs(A)-areaAbs(B) })
+    out.sort((A,B)=>{
+      const ca = centroid(A), cb = centroid(B)
+      if (Math.abs(ca[0]-cb[0]) > 1e-6) return ca[0] - cb[0]
+      if (Math.abs(ca[1]-cb[1]) > 1e-6) return ca[1] - cb[1]
+      const area = (poly) => { let s=0; for (let i=0,j=poly.length-1;i<poly.length;j=i++) { s += (poly[j][0]*poly[i][1] - poly[i][0]*poly[j][1]) } return Math.abs(s*0.5) }
+      return area(A) - area(B)
+    })
     return out
   }
 
   const clipOverlays = useMemo(() => {
-    const items = []
-    for (const l of layers) {
-      if (!l.visible) continue
-      if (l.generator !== 'hatchFill' && l.generator !== 'halftone' && l.generator !== 'mdiPattern' && l.generator !== 'svgImport') continue
-      if ((l.params?.clipMode || 'all') !== 'index') continue
-      const srcId = l.params?.clipLayerId
-      if (!srcId) continue
-      const src = rendered.find(r => r.layer.id === srcId && r.layer.visible)
-      if (!src || !src.polylines || src.polylines.length === 0) continue
-      const polys = makeClipPolysLocal(src.polylines)
-      // Build labels and spread overlapping centroids slightly for visibility
-      const areaAbs = (p)=>{ let a=0; for(let i=0,j=p.length-1;i<p.length;j=i++){ a += (p[j][0]*p[i][1] - p[i][0]*p[j][1]) } return Math.abs(a*0.5) }
-      const raw = polys.map((p, i) => ({ idx: i, c: centroidOfPoly(p), area: areaAbs(p) }))
-      const groups = new Map()
-      for (const lab of raw) {
-        const kx = Math.round(lab.c[0]*10)/10
-        const ky = Math.round(lab.c[1]*10)/10
-        const key = `${kx}_${ky}`
-        if (!groups.has(key)) groups.set(key, [])
-        groups.get(key).push(lab)
-      }
-      const labels = []
-      for (const arr of groups.values()) {
-        // Radial placement around the shared centroid to avoid overlap for concentric shapes
-        arr.sort((a,b)=>a.area - b.area)
-        const center = arr[0].c
-        if (arr.length === 1) { labels.push({ idx: arr[0].idx, c: center }); continue }
-        const anglesDeg = [-90, 90, 180, 0, -45, 45, 135, -135]
-        const angles = anglesDeg.map(d => d * Math.PI / 180)
-        const baseR = 10 // mm from center
-        const ringStep = 8 // mm between rings of labels if >8 items share a centroid
-        for (let j = 0; j < arr.length; j++) {
-          const a = angles[j % angles.length]
-          const ring = Math.floor(j / angles.length)
-          const r = baseR + ring * ringStep
-          const lx = center[0] + Math.cos(a) * r
-          const ly = center[1] + Math.sin(a) * r
-          labels.push({ idx: arr[j].idx, c: [lx, ly] })
+    if (!picker.active || !picker.targetLayerId) return []
+    const target = layers.find(l => l.id === picker.targetLayerId)
+    if (!target) return []
+    // Find source layer polylines based on target clip settings
+    let srcEntry = null
+    if (target.params?.clipLayerId) {
+      srcEntry = rendered.find(r => r.layer.id === target.params.clipLayerId)
+    } else if (target.params?.clipToPrevious) {
+      const idx = layers.findIndex(l => l.id === target.id)
+      if (idx > 0) {
+        for (let i = idx - 1; i >= 0; i--) {
+          const r = rendered.find(rr => rr.layer.id === layers[i].id)
+          if (r && r.layer.visible && (r.polylines?.length)) { srcEntry = r; break }
         }
       }
-      const selectedIdx = Array.isArray(l.params?.clipIndices)
-        ? l.params.clipIndices.map(n=>Math.max(0,Math.floor(n||0)))
-        : (Number.isFinite(l.params?.clipIndex) ? [Math.max(0, Math.floor(l.params.clipIndex))] : [])
-      items.push({ layerId: l.id, sourceLayerId: srcId, polys, labels, selectedIdx })
     }
-    return items
-  }, [layers, rendered])
+    if (!srcEntry) return []
+    const closed = makeClipPolysLocal(srcEntry.polylines || [])
+    const labels = closed.map((poly, idx) => {
+      let a=0,cx=0,cy=0
+      for (let i=0,j=poly.length-1;i<poly.length;j=i++) { const x0=poly[j][0],y0=poly[j][1],x1=poly[i][0],y1=poly[i][1]; const f=(x0*y1-x1*y0); a+=f; cx+=(x0+x1)*f; cy+=(y0+y1)*f }
+      a*=0.5; const c = Math.abs(a)<1e-6 ? [poly[0][0],poly[0][1]] : [cx/(6*a), cy/(6*a)]
+      return { idx, c }
+    })
+    return [{ layerId: target.id, sourceLayerId: srcEntry.layer.id, polys: closed, labels }]
+  }, [picker, layers, rendered])
 
-  // Plot length/time estimator
-  const lengthEstimate = useMemo(() => {
-    const fmt = (m) => {
-      if (!Number.isFinite(m)) return '-'
-      const s = Math.round(m * 60)
-      const h = Math.floor(s / 3600)
-      const mm = Math.floor((s % 3600) / 60)
-      const ss = s % 60
-      return h > 0 ? `${h}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${mm}:${String(ss).padStart(2,'0')}`
-    }
-    if (!doc.showToolpathControls || previewRunning) {
-      return { drawLen: 0, travelLen: 0, totalLen: 0, drawMin: 0, travelMin: 0, totalMin: 0, penLifts: 0, fmt }
-    }
-    const polys = finalPolylinesForStats
-    const penLifts = polys.length
-    const lenPolyline = (p) => {
-      let L = 0
-      for (let i = 0; i < p.length - 1; i++) {
-        const a = p[i], b = p[i+1]
-        L += Math.hypot(b[0]-a[0], b[1]-a[1])
-      }
-      return L
-    }
-    const drawLen = polys.reduce((acc, p) => acc + (p.length > 1 ? lenPolyline(p) : 0), 0)
-    let travelLen = 0
-    if (polys.length > 1) {
-      travelLen += Math.hypot(polys[0][0][0] - doc.startX, polys[0][0][1] - doc.startY)
-    }
-    for (let i = 0; i < polys.length - 1; i++) {
-      const cur = polys[i]
-      const nxt = polys[i+1]
-      if (!cur.length || !nxt.length) continue
-      const a = cur[cur.length - 1]
-      const b = nxt[0]
-      travelLen += Math.hypot(b[0]-a[0], b[1]-a[1])
-    }
-    const feed = Math.max(1e-6, doc.feed)
-    const travel = Math.max(1e-6, doc.travel)
-    const drawMin = drawLen / feed
-    const travelMin = travelLen / travel
-    const totalMin = drawMin + travelMin
-    return { drawLen, travelLen, totalLen: drawLen + travelLen, drawMin, travelMin, totalMin, penLifts, fmt }
-  }, [finalPolylinesForStats, doc.feed, doc.travel, doc.startX, doc.startY, doc.showToolpathControls, previewRunning])
-
-  const downloadSVGs = () => {
-    setSaveMessage('Preparing export...');
-    setIsSaving(true);
-    setSaveProgress(0);
-
-    setTimeout(async () => {
-      try {
-        // Use full quality for export
-        const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
-        const zip = new JSZip()
-        full.forEach(({ layer, polylines }, idx) => {
-          if (!layer.visible) return
-          let polys = polylines
-          if (doc.optimize !== 'none') {
-            polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-          }
-          if (doc.optimizeJoin) {
-            polys = joinPolylines(polys)
-          }
-          const d = polys.map(polylineToPath).join(' ')
-          const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: layer.color, strokeWidth: doc.strokeWidth }] })
-          zip.file(`${String(idx+1).padStart(2,'0')}-${layer.name.replace(/\s+/g,'_')}.svg`, svg)
-        })
-        setSaveMessage('Zipping SVGs...');
-        const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
-          setSaveProgress(metadata.percent);
-        })
-        setSaveMessage('Saving file...');
-        saveAs(blob, `plotter_layers_${doc.seed}.zip`)
-      } catch (e) {
-        console.error('SVG export failed', e)
-      } finally {
-        setIsSaving(false)
-      }
-    }, 16) // yield to main thread
-  }
+  // Transform overlay (computed when manipulating an svgImport layer) — not active by default
+  const transformOverlay = null
 
   const downloadGcode = () => {
     setSaveMessage('Preparing G-code...');
     setIsSaving(true);
     setSaveProgress(0);
+    showToast('Preparing G-code...')
 
     setTimeout(async () => {
       try {
         // Regenerate at full quality for export
+        const zip = new JSZip()
         const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
-        const opts = {
-          width: doc.width,
-          height: doc.height,
-          feed: doc.feed,
-          travel: doc.travel,
+
+        // Base options for G-code output, derived from current document settings
+        const optsBase = {
+          feed: doc.feed ?? 1800,
+          travel: doc.travel ?? 3000,
           scale: 1,
-          penUp: doc.penUp,
-          penDown: doc.penDown,
-          safeZ: doc.safeZ,
-          penMode: doc.penMode,
-          servoUp: doc.servoUp,
-          servoDown: doc.servoDown,
-          delayAfterUp: doc.delayAfterUp,
-          delayAfterDown: doc.delayAfterDown,
-          originX: Number(doc.originX) || 0,
-          originY: Number(doc.originY) || 0
+          penUp: doc.penUp ?? 5,
+          penDown: doc.penDown ?? 0,
+          safeZ: doc.safeZ ?? (doc.penUp ?? 5),
+          penMode: doc.penMode || 'servo',
+          servoUp: doc.servoUp || 'M3 S180',
+          servoDown: doc.servoDown || 'M3 S0',
+          delayAfterUp: doc.delayAfterUp ?? 0,
+          delayAfterDown: doc.delayAfterDown ?? 0,
+          startX: (doc.startUseMargin ? (doc.margin ?? 0) : (doc.startX ?? 0)),
+          startY: (doc.startUseMargin ? (doc.margin ?? 0) : (doc.startY ?? 0)),
+          originX: 0,
+          originY: 0,
         }
 
-        if (doc.exportMode === 'combined') {
-          setSaveMessage('Generating G-code...');
-          const parts = []
+        const mode = doc.exportMode || 'layers'
+
+        if (mode === 'layers') {
+          // One G-code file per visible layer
+          for (const entry of full) {
+            if (!entry || !entry.layer || !entry.layer.visible) continue
+            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
+            if (!planned.length) continue
+            const gcode = toGcode(planned, { ...optsBase, includeHeader: true, includeFooter: true })
+            const safe = (entry.layer.name || 'layer').replace(/\s+/g, '_').replace(/[^A-Za-z0-9_\-]/g, '')
+            zip.file(`${safe}.gcode`, gcode)
+          }
+        } else if (mode === 'colors') {
+          // Group polylines across all layers by color
+          const colorMap = {}
+          for (const entry of full) {
+            if (!entry || !entry.layer || !entry.layer.visible) continue
+            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
+            if (!planned.length) continue
+            const key = String(entry.layer.color || '#000000').toLowerCase()
+            if (!colorMap[key]) colorMap[key] = []
+            colorMap[key].push(...planned)
+          }
+          for (const [color, polys] of Object.entries(colorMap)) {
+            if (!polys.length) continue
+            const gcode = toGcode(polys, { ...optsBase, includeHeader: true, includeFooter: true })
+            const safeColor = color.replace('#', '')
+            zip.file(`color_${safeColor}.gcode`, gcode)
+          }
+        } else {
+          // Combined into a single file, optional pause between layers
           let first = true
-          const visibleLayers = full.filter(r => r.layer.visible && r.polylines.length > 0)
-          visibleLayers.forEach((entry, idx) => {
-            const { layer, polylines } = entry
-            let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
-            if (doc.optimizeJoin) {
-              ordered = joinPolylines(ordered)
-            }
-            const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY, includeHeader: first, includeFooter: idx === visibleLayers.length - 1 })
-            parts.push(`; --- Layer ${idx + 1}: ${layer.name} (${layer.color}) ---`)
-            parts.push(g)
-            if (doc.pauseCombined && idx < visibleLayers.length - 1) {
-              const msg = (doc.pauseMessage || 'Change pen to <color>').replace('<color>', layer.color)
-              const code = doc.pauseCode || 'M0'
-              parts.push(`${code} ; ${msg}`)
+          let combined = ''
+          const pauseBetween = (doc.pauseCombined ?? true)
+          const pauseCode = String(doc.pauseCode ?? 'M0')
+          const pauseMsg = String(doc.pauseMessage ?? 'Change pen to <color>')
+
+          for (let i = 0; i < full.length; i++) {
+            const entry = full[i]
+            if (!entry || !entry.layer || !entry.layer.visible) continue
+            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
+            if (!planned.length) continue
+            const part = toGcode(planned, { ...optsBase, includeHeader: first, includeFooter: false })
+            combined += part
+            // Insert a pause between visible layers if requested
+            const hasNext = full.slice(i + 1).some(e => e && e.layer && e.layer.visible)
+            if (pauseBetween && hasNext) {
+              const colorText = String(entry.layer.color || '').toUpperCase()
+              combined += `\n; Pause for next layer\n; ${pauseMsg.replace('<color>', colorText)}\n${pauseCode}\n`
             }
             first = false
-          })
-          const combined = parts.join('\n')
-          const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' })
-          setSaveMessage('Saving file...');
-          saveAs(blob, `plotter_${doc.seed}.gcode`)
-          return
-        }
-
-        const zip = new JSZip()
-        if (doc.exportMode === 'layers') {
-          setSaveMessage('Generating layers...');
-          full.forEach(({ layer, polylines }, idx) => {
-            if (!layer.visible || polylines.length === 0) return
-            let ordered = orderPolylines(polylines, doc.optimize, doc.startX, doc.startY)
-            if (doc.optimizeJoin) {
-              ordered = joinPolylines(ordered)
-            }
-            const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
-            const name = `${String(idx + 1).padStart(2, '0')}-${layer.name.replace(/\s+/g, '_')}.gcode`
-            zip.file(name, g)
-          })
-        }
-
-        if (doc.exportMode === 'colors') {
-          setSaveMessage('Generating colors...');
-          const byColor = new Map()
-          full.forEach(({ layer, polylines }) => {
-            if (!layer.visible || polylines.length === 0) return
-            const key = layer.color
-            if (!byColor.has(key)) byColor.set(key, [])
-            byColor.get(key).push(...polylines)
-          })
-          Array.from(byColor.entries()).forEach(([color, polys]) => {
-            let ordered = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-            if (doc.optimizeJoin) {
-              ordered = joinPolylines(ordered)
-            }
-            const g = toGcode(ordered, { ...opts, startX: doc.startX, startY: doc.startY })
-            const name = `${color.replace('#', '')}.gcode`
-            zip.file(name, g)
-          })
+          }
+          // Footer to finish program
+          combined += toGcode([], { ...optsBase, includeHeader: false, includeFooter: true })
+          zip.file(`combined.gcode`, combined)
         }
 
         setSaveMessage('Zipping G-code...');
@@ -2392,8 +1631,10 @@ export default function App() {
         })
         setSaveMessage('Saving file...');
         saveAs(blob, `gcode_${doc.seed}.zip`)
+        showToast('G-code saved')
       } catch (e) {
         console.error('G-code export failed', e)
+        showToast('G-code export failed')
       } finally {
         setIsSaving(false)
       }
@@ -2401,28 +1642,24 @@ export default function App() {
   }
 
   const downloadLayerSvg = (layerId) => {
-    setSaveMessage('Preparing SVG...');
-    setIsSaving(true);
-    setSaveProgress(0);
+    setSaveMessage('Saving SVG...')
+    setIsSaving(true)
+    setSaveProgress(0)
     setTimeout(async () => {
       try {
         const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
         const entry = full.find(e => e.layer.id === layerId)
-        if (!entry) return
-        let polys = entry.polylines
-        if (doc.optimize !== 'none') {
-          polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-        }
-        if (doc.optimizeJoin) {
-          polys = joinPolylines(polys)
-        }
-        const d = polys.map(polylineToPath).join(' ')
+        if (!entry) throw new Error('Layer not found')
+        const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
+        const d = planned.map(polylineToPath).join(' ')
         const svg = buildSVG({ width: doc.width, height: doc.height, bleed: doc.bleed, paths: [{ d, stroke: entry.layer.color, strokeWidth: doc.strokeWidth }] })
         const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-        setSaveMessage('Saving file...');
+        setSaveMessage('Saving file...')
         saveAs(blob, `${entry.layer.name.replace(/\s+/g, '_')}.svg`)
+        showToast('Layer SVG saved')
       } catch (e) {
         console.error('SVG export failed', e)
+        showToast('SVG export failed')
       } finally {
         setIsSaving(false)
       }
@@ -2584,36 +1821,34 @@ export default function App() {
 
   return (
     <div className="h-screen overflow-hidden grid grid-cols-[minmax(320px,380px)_1fr] lg:grid-cols-[minmax(360px,420px)_1fr] gap-0">
-      <aside className={`bg-panel border-r border-white/5 p-4 h-screen overflow-y-auto ${compactUI ? 'ui-compact' : ''} ${superCompact ? 'ui-super' : ''}`}>
+      <aside className={`bg-panel border-r border-white/5 p-4 h-screen overflow-y-auto ui-super`}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-semibold tracking-wide">Plotter Lab</h1>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm opacity-80" title="Compact: tighter spacing and condensed controls">
-              <input type="checkbox" className="w-4 h-4" checked={!!compactUI}
-                onChange={(e)=>{ const v = e.target.checked; if (!v && superCompact) setSuperCompact(false); setCompactUI(v) }} />
-              Compact
-            </label>
-            <label className="flex items-center gap-2 text-sm opacity-80" title="Super compact: maximum density; also enables Compact">
-              <input type="checkbox" className="w-4 h-4" checked={!!superCompact}
-                onChange={(e)=>{ const v = e.target.checked; setSuperCompact(v); if (v) setCompactUI(true) }} />
-              Super
-            </label>
-            <button className="btn" title="New Layer" onClick={addLayer}>
-              <Icon path={mdiLayersPlus} />
-            </button>
-          </div>
-          {/* Progress pill moved into stage container (see below) */}
         </div>
+        <div className="flex gap-2 mb-3">
+          <button
+            className={`btn ${uiTab==='tools' ? 'bg-white/10 border-white/30' : ''}`}
+            onClick={()=>{ setUiTab('tools'); showToast('Tools') }}
+            title="Tools"
+          >Tools</button>
+          <button
+            className={`btn ${uiTab==='layers' ? 'bg-white/10 border-white/30' : ''}`}
+            onClick={()=>{ setUiTab('layers'); showToast('Layers') }}
+            title="Layers"
+          >Layers</button>
+        </div>
+        {/* Progress pill moved into stage container (see below) */}
 
+        {uiTab==='tools' && (
         <section className="space-y-3">
-          <div className="rounded-lg p-3 bg-black/20 border border-white/5">
-            <h2 className="font-medium mb-2 flex items-center gap-2"><Icon path={mdiFileDocumentOutline}/> <span>Document</span></h2>
-            <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-              <label className="flex flex-col gap-1" title="Preset paper sizes. 'Custom' uses your Width/Height below.">Paper Size
-                <Select value={doc.paperSize || 'custom'} onChange={(v)=>applyPaperSize(v)}
-                  options={paperOptions.map(p=>({label:p.label, value:p.key}))}
-                />
-              </label>
+            <div className="rounded-lg p-3 bg-black/20 border border-white/5">
+              <h2 className="font-medium mb-2 flex items-center gap-2"><Icon path={mdiFileDocumentOutline}/> <span>Document</span></h2>
+              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                <label className="flex flex-col gap-1" title="Preset paper sizes. 'Custom' uses your Width/Height below.">Paper Size
+                  <Select value={doc.paperSize || 'custom'} onChange={(v)=>applyPaperSize(v)}
+                    options={paperOptions.map(p=>({label:p.label, value:p.key}))}
+                  />
+                </label>
               <label className="flex flex-col gap-1" title="Rotate the page; swaps Width/Height when needed.">Orientation
                 <Select value={doc.orientation || 'landscape'} onChange={(v)=>applyOrientation(v)}
                   options={[{label:'Landscape', value:'landscape'},{label:'Portrait', value:'portrait'}]}
@@ -2893,9 +2128,10 @@ export default function App() {
             </div>
             <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10 col-span-2 lg:col-span-3 mt-2"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiLightbulbOutline}/> <span>Examples</span></h2></div>
             <div className="flex gap-2 items-center col-span-2 lg:col-span-3">
+              <input className="input flex-1" placeholder="Search examples…" value={examplesQuery} onChange={e=>setExamplesQuery(e.target.value)} />
               <Select className="flex-1" value={selectedExample}
                 onChange={(v)=>setSelectedExample(v)}
-                options={[{ label: '(Examples)', value: '' }, ...examples.map(e => ({ label: e.label, value: e.file }))]}
+                options={[{ label: '(Examples)', value: '' }, ...filteredExamples.map(e => ({ label: e.label, value: e.file }))]}
               />
               <button className="btn" onClick={()=>loadExample(selectedExample)} disabled={!selectedExample} title="Load Example">
                 {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Example</>)}
@@ -2924,10 +2160,17 @@ export default function App() {
               </div>
             )}
           </div>
+        </section>
+        )}
 
+        {uiTab==='layers' && (
+          <>
           <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur flex items-center justify-between py-2 mt-4 border-b border-white/10">
             <h2 className="font-medium flex items-center gap-2"><Icon path={mdiLayersOutline}/> <span>Layers</span></h2>
             <div className="flex gap-2">
+              <button className="btn" title="New Layer" onClick={addLayer}>
+                {compactUI ? (<Icon path={mdiLayersPlus}/>) : (<><Icon path={mdiLayersPlus}/> New Layer</>)}
+              </button>
               <button className="btn" onClick={()=>setAllLayersCollapsed(true)} title="Collapse All">
                 {compactUI ? (<Icon path={mdiArrowCollapseVertical}/>) : (<><Icon path={mdiArrowCollapseVertical}/> Collapse All</>)}
               </button>
@@ -3768,7 +3011,8 @@ export default function App() {
               </div>
             ))}
           </div>
-        </section>
+          </>
+        )}
       </aside>
 
       <main className="p-4 h-screen overflow-hidden flex flex-col" style={{ background: doc.appBg }}>
@@ -3808,6 +3052,11 @@ export default function App() {
                 <button className="btn" title="Reset phase to 0" onClick={resetQcPhase}><Icon path={mdiRefresh}/> {compactUI? null : 'Reset'}</button>
               </div>
             )}
+            <div className="flex items-center gap-1 pl-2 ml-1 border-l border-white/10">
+              <button className="btn" title="Reload generators" onClick={reloadGenerators} disabled={loadingPlugins}>
+                <Icon path={mdiRefresh}/> {compactUI ? null : (loadingPlugins ? 'Reloading…' : 'Reload')}
+              </button>
+            </div>
             {picker.active && (
               <span className="text-xs px-2 py-0.5 rounded bg-white/10">Pick: click to select • Shift+Click to add/remove</span>
             )}
@@ -3816,6 +3065,19 @@ export default function App() {
               {doc.showToolpathControls ? 'Hide G-code ↓' : 'G-code ↑'}
             </button>
           </div>
+          {/* Stats overlay: polyline and segment counts */}
+          <div className="absolute top-12 right-2 z-10 bg-black/55 backdrop-blur rounded-md px-2 py-1 text-xs border border-white/10">
+            <span className="opacity-80">Polys</span> {statsCounts.polys} <span className="opacity-80">• Segs</span> {statsCounts.segs}
+          </div>
+          {/* Toast notification */}
+          {toast && (
+            <div
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-md text-sm border shadow-soft"
+              style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(2px)' }}
+            >
+              {toast}
+            </div>
+          )}
           {/* Bottom-right quick toggle for G-code panel (primary) */}
           <div className="absolute bottom-2 right-2 z-20">
             <button

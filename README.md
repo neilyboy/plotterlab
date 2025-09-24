@@ -68,8 +68,8 @@ Build and run via Docker (multi-stage image):
 # Build image
 docker build -t plotterlab:latest .
 
-# Run
-docker run -d --name plotterlab -p 8080:8080 --restart unless-stopped plotterlab:latest
+# Run (host port 8082)
+docker run -d --name plotterlab -p 8082:8080 --restart unless-stopped plotterlab:latest
 ```
 
 Or use Docker Compose:
@@ -77,7 +77,7 @@ Or use Docker Compose:
 ```bash
 docker compose up -d --build
 ```
-Then open http://<server-ip>:8080
+Then open http://<server-ip>:8082
 
 ## Performance & Architecture
 
@@ -130,7 +130,66 @@ export function myGenerator({ width, height, margin, seed, ...params }) {
   return [ [ [x1,y1], [x2,y2], ... ], [ ... ], ... ]
 }
 ```
-Add it to `src/lib/generators/`, export the function, and register it in `GENERATORS` inside `src/App.jsx` with default params.
+Add it to `src/lib/generators/`, export the function, and register it in the central registry at `src/lib/generators/registry.js` with default params. The app and renderer both consume this registry so preview and exports stay in sync.
+
+### Plugin Authoring (External Generators)
+
+You can also register generators at runtime without changing the codebase. The app exposes a small browser API:
+
+```js
+// Available on window
+window.Plotterlab.registerGenerator(key, { name, params, fn })
+window.Plotterlab.getGenerators()
+```
+
+Generator function signature:
+
+```js
+function myGen({ width, height, margin, seed, onProgress, ...userParams }) {
+  // return an array of polylines: Array<Array<[x,y]>>
+  return [ [ [x1,y1], [x2,y2], ... ], ... ]
+}
+```
+
+Quick start (drop a script in `public/plugins/`):
+
+1) Create `public/plugins/index.json` with a list of plugin script paths (already present in this repo):
+
+```json
+[
+  "plugins/example_square.js",
+  "plugins/example_noise_rings.js"
+]
+```
+
+2) Each plugin script should call `registerGenerator`:
+
+```html
+<script>
+  (function(){
+    if (!window.Plotterlab) return;
+    const gen = {
+      name: 'Example: Square Frame',
+      params: { margin: 20, simplifyTol: 0, inset: 0 },
+      fn: ({ width, height, margin, inset }) => {
+        const x0 = margin + inset, y0 = margin + inset;
+        const x1 = width - margin - inset, y1 = height - margin - inset;
+        return [[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]]]
+      }
+    };
+    window.Plotterlab.registerGenerator('exampleSquareFrame', gen);
+  })();
+  </script>
+```
+
+3) In the app, click the “Reload” button (top-right toolbar) to load or refresh plugins from `/plugins/index.json`. New generators will appear in the layer Generator dropdown immediately.
+
+Notes:
+
+- Plugin scripts are served from the build under `/plugins/*` (copied from `public/plugins/*`).
+- `getGenerators()` merges built‑in and plugin generators. Defaults for each generator come from the registry.
+- Keep plugin code pure and deterministic with respect to input params; return polylines only.
+- For heavy generators, use the `onProgress(fraction)` callback to report inner progress (0..1).
 
 ## Roadmap
 
@@ -180,7 +239,7 @@ This project’s code is MIT licensed. External dependencies retain their respec
 docker compose up -d --build
 ```
 
-Open: http://localhost:8080 (or your server IP)
+Open: http://localhost:8082 (or your server IP)
 
 ## 📚 Examples Library
 

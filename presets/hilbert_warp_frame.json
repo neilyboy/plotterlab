@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"hil","name":"Hilbert","color":"#e5e7eb","visible":true,"generator":"hilbert","params":{"order":7,"margin":24,"simplifyTol":0}},
+    {"id":"warp","name":"Soft Warp","color":"#00AEEF","visible":true,"generator":"pathWarp","params":{"srcLayerId":"","srcToPrevious":true,"amp":1.6,"scale":0.016,"step":1.0,"copies":1,"rotateFlow":false,"margin":20,"simplifyTol":0}}
+  ]
+}

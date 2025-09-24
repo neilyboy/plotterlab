@@ -99,42 +99,61 @@ export function reactionContours({
     return [x0 + (x1 - x0) * a, y0 + (y1 - y0) * a]
   }
 
-  const segs = []
-  for (let j = 0; j < ny - 1; j++) {
-    for (let i = 0; i < nx - 1; i++) {
-      const i00 = j * nx + i
-      const i10 = j * nx + (i + 1)
-      const i01 = (j + 1) * nx + i
-      const i11 = (j + 1) * nx + (i + 1)
-      const v00 = V[i00], v10 = V[i10], v01 = V[i01], v11 = V[i11]
-      let idxMask = 0
-      if (v00 > iso) idxMask |= 1
-      if (v10 > iso) idxMask |= 2
-      if (v11 > iso) idxMask |= 4
-      if (v01 > iso) idxMask |= 8
-      if (idxMask === 0 || idxMask === 15) continue
+  function buildSegmentsAtIso(isoLevel) {
+    const segsLocal = []
+    for (let j = 0; j < ny - 1; j++) {
+      for (let i = 0; i < nx - 1; i++) {
+        const i00 = j * nx + i
+        const i10 = j * nx + (i + 1)
+        const i01 = (j + 1) * nx + i
+        const i11 = (j + 1) * nx + (i + 1)
+        const v00 = V[i00], v10 = V[i10], v01 = V[i01], v11 = V[i11]
+        let idxMask = 0
+        if (v00 > isoLevel) idxMask |= 1
+        if (v10 > isoLevel) idxMask |= 2
+        if (v11 > isoLevel) idxMask |= 4
+        if (v01 > isoLevel) idxMask |= 8
+        if (idxMask === 0 || idxMask === 15) continue
 
-      const x0 = originX + (i / (nx - 1)) * W
-      const y0 = originY + (j / (ny - 1)) * H
-      const x1 = originX + ((i + 1) / (nx - 1)) * W
-      const y1 = originY + ((j + 1) / (ny - 1)) * H
+        const x0 = originX + (i / (nx - 1)) * W
+        const y0 = originY + (j / (ny - 1)) * H
+        const x1 = originX + ((i + 1) / (nx - 1)) * W
+        const y1 = originY + ((j + 1) / (ny - 1)) * H
 
-      const e = {}
-      if ((idxMask & 1) !== (idxMask & 2)) e.a = interp(x0, y0, v00, x1, y0, v10, iso)
-      if ((idxMask & 2) !== (idxMask & 4)) e.b = interp(x1, y0, v10, x1, y1, v11, iso)
-      if ((idxMask & 4) !== (idxMask & 8)) e.c = interp(x1, y1, v11, x0, y1, v01, iso)
-      if ((idxMask & 8) !== (idxMask & 1)) e.d = interp(x0, y1, v01, x0, y0, v00, iso)
+        const e = {}
+        if ((idxMask & 1) !== (idxMask & 2)) e.a = interp(x0, y0, v00, x1, y0, v10, isoLevel)
+        if ((idxMask & 2) !== (idxMask & 4)) e.b = interp(x1, y0, v10, x1, y1, v11, isoLevel)
+        if ((idxMask & 4) !== (idxMask & 8)) e.c = interp(x1, y1, v11, x0, y1, v01, isoLevel)
+        if ((idxMask & 8) !== (idxMask & 1)) e.d = interp(x0, y1, v01, x0, y0, v00, isoLevel)
 
-      const cases = {
-        1:  ['d','a'], 2:  ['a','b'], 3:  ['d','b'], 4:  ['b','c'], 5:  ['d','a','b','c'], 6:  ['a','c'], 7:  ['d','c'],
-        8:  ['c','d'], 9:  ['a','c'],10: ['a','b','c','d'],11: ['b','d'],12: ['b','d'],13: ['a','b'],14: ['d','a']
+        const cases = {
+          1:  ['d','a'], 2:  ['a','b'], 3:  ['d','b'], 4:  ['b','c'], 5:  ['d','a','b','c'], 6:  ['a','c'], 7:  ['d','c'],
+          8:  ['c','d'], 9:  ['a','c'],10: ['a','b','c','d'],11: ['b','d'],12: ['b','d'],13: ['a','b'],14: ['d','a']
+        }
+        const con = cases[idxMask]
+        if (!con) continue
+        for (let k = 0; k < con.length; k += 2) {
+          const p = e[con[k]]
+          const q = e[con[k + 1]]
+          if (p && q) segsLocal.push([p, q])
+        }
       }
-      const con = cases[idxMask]
-      if (!con) continue
-      for (let k = 0; k < con.length; k += 2) {
-        const p = e[con[k]]
-        const q = e[con[k + 1]]
-        if (p && q) segs.push([p, q])
+    }
+    return segsLocal
+  }
+
+  // First attempt with provided iso; adapt if the simulated field saturates.
+  let segs = buildSegmentsAtIso(iso)
+  if (segs.length === 0) {
+    // Compute V range and try a midpoint iso within the actual range
+    let minV = 1, maxV = 0
+    for (let i = 0; i < N; i++) { const v = V[i]; if (v < minV) minV = v; if (v > maxV) maxV = v }
+    if (maxV - minV > 1e-6) {
+      const mid = minV + (maxV - minV) * 0.5
+      segs = buildSegmentsAtIso(mid)
+      if (segs.length === 0) {
+        const alt = minV + (maxV - minV) * 0.3
+        segs = buildSegmentsAtIso(alt)
       }
     }
   }

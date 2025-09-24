@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.1,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"dj","name":"De Jong Nebula","color":"#EC008C","visible":true,"generator":"deJong","params":{"a":2.01,"b":-2.53,"c":1.61,"d":-0.33,"iter":140000,"burn":1200,"margin":20,"simplifyTol":0}}
+  ]
+}

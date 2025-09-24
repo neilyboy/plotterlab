@@ -1,0 +1,8 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"iso","name":"Iso Contours","color":"#2dd4bf","visible":true,"generator":"isoContours","params":{"cols":140,"rows":100,"levels":48,"separation":64,"lobes":3,"sigmaX":90,"sigmaY":60,"amplitude":1,"bias":0.22,"warp":0.2,"margin":20,"simplifyTol":0}},
+    {"id":"warp","name":"Warp","color":"#f472b6","visible":true,"generator":"pathWarp","params":{"srcLayerId":"","srcToPrevious":true,"amp":2.2,"scale":0.02,"step":1.0,"copies":1,"rotateFlow":false,"margin":20,"simplifyTol":0}},
+    {"id":"rose","name":"Rosette Rings (clipped)","color":"#EC008C","visible":true,"generator":"superformulaRings","params":{"m":10,"a":1,"b":1,"n1":0.25,"n2":0.25,"n3":0.25,"rings":52,"steps":900,"inner":0.08,"rotateDeg":6,"morph":0.2,"twistDeg":0,"n23Lock":true,"mRound":true,"mEven":false,"clipToPrevious":true,"clipRule":"union","margin":20,"simplifyTol":0}}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"stars","name":"Star Lattice","color":"#f472b6","visible":true,"generator":"starLattice","params":{"cols":12,"rows":16,"spacing":26,"radius":11,"jitter":0.0,"margin":20,"simplifyTol":0}},
+    {"id":"hatch","name":"Hatch (clipped)","color":"#e5e7eb","visible":true,"generator":"hatchFill","params":{"angleDeg":45,"spacing":5.5,"offset":0,"cross":false,"crossOffset":0,"clipToPrevious":true,"clipRule":"even-odd","margin":20,"simplifyTol":0}}
+  ]
+}

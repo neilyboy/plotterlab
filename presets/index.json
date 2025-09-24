@@ -27,4 +27,61 @@
   , { "label": "Combinator (A − B) → Hatch", "file": "combinator_diff_hatch.json" }
   , { "label": "Combinator (A ⊕ B) → Stipple", "file": "combinator_xor_stipple.json" }
   , { "label": "Combinator (A ∪ B) → Halftone Radial", "file": "combinator_union_halftone_radial.json" }
+  , { "label": "Galaxy Spirals", "file": "galaxy_spirals.json" }
+  , { "label": "Super Star + Gear", "file": "super_star_gear.json" }
+  , { "label": "Moiré in Rings (Clip)", "file": "moire_rings_clip.json" }
+  , { "label": "Quasicrystal Starfield", "file": "quasicrystal_starfield.json" }
+  , { "label": "Flow Ribbons Triptych (CMY)", "file": "ribbons_triptych.json" }
+  , { "label": "L-system → Path Warp Garden", "file": "lsystem_path_warp_garden.json" }
+  , { "label": "Maze Classic", "file": "maze_classic.json" }
+  , { "label": "Maze Dense", "file": "maze_dense.json" }
+  , { "label": "Reaction → Warp → Bands", "file": "reaction_warp_bands.json" }
+  , { "label": "Super Union → Bands", "file": "super_union_bands.json" }
+  , { "label": "Poisson Warp Ribbon", "file": "poisson_warp_ribbon.json" }
+  , { "label": "Reaction Contours (basic)", "file": "reaction_contours_basic.json" }
+  , { "label": "Reaction Contours (iso 0.40)", "file": "reaction_contours_low_iso.json" }
+  , { "label": "Reaction Contours (iso 0.60)", "file": "reaction_contours_high_iso.json" }
+  , { "label": "TSP Warp Orbit", "file": "tsp_warp_orbit.json" }
+  , { "label": "Contours → Warp → Rosette", "file": "contours_warp_rosette.json" }
+  , { "label": "Combinator XOR → Stipple Tubes", "file": "combinator_xor_stipple_tubes.json" }
+  , { "label": "Quasicrystal + Radial Bands", "file": "quasicrystal_bands_radial.json" }
+  , { "label": "Hilbert Soft Warp Frame", "file": "hilbert_warp_frame.json" }
+  , { "label": "Star + Hatch (Clip)", "file": "star_hatch_clip.json" }
+  , { "label": "Streamlines Follow Bands (Clip)", "file": "streamlines_follow_bands.json" }
+  , { "label": "Reaction Strokes Tri Mix (CMY)", "file": "reaction_strokes_tri_mix.json" }
+  , { "label": "Super Shell + Hatch (Clip)", "file": "super_shell_hatch_clip.json" }
+  , { "label": "Quasicrystal ∪ Rosette", "file": "quasicrystal_union_rosette.json" }
+  , { "label": "Streamlines Soft Warp", "file": "streamlines_soft_warp.json" }
+  , { "label": "L-system → Stipple (Clip)", "file": "lsystem_stipple_clip.json" }
+  , { "label": "MDI Icon Field Twist", "file": "mdi_icon_field_twist.json" }
+  , { "label": "Reaction Contours Soft Warp", "file": "reaction_contours_soft_warp.json" }
+  , { "label": "TSP Dual Warp Orbit", "file": "tsp_dual_warp_orbit.json" }
+  , { "label": "Stripe Bands → Moiré Frames", "file": "stripebands_moire_frames.json" }
+  , { "label": "Iso Fans → Hatch (Clip)", "file": "iso_fans_hatch.json" }
+  , { "label": "Combinator XOR Rings → Warp", "file": "combinator_xor_rings_warp.json" }
+  , { "label": "Quasicrystal → Bands (Clip)", "file": "quasicrystal_bands_clip.json" }
+  , { "label": "Hilbert Double Warp", "file": "hilbert_double_warp.json" }
+  , { "label": "MDI Pattern → Hatch (Clip)", "file": "mdi_pattern_hatch_clip.json" }
+  , { "label": "Reaction Strokes → Bands (Clip)", "file": "reaction_strokes_bands_clip.json" }
+  , { "label": "Streamlines → Moiré Frame (Clip)", "file": "streamlines_moire_frame.json" }
+  , { "label": "Pixel Mosaic → Rosette (Clip)", "file": "pixel_mosaic_rosette_clip.json" }
+  , { "label": "Super Rosette → Dense Hatch (Clip)", "file": "super_rosette_hatch_dense.json" }
+  , { "label": "Flow Ribbons → Double Twist", "file": "flow_ribbons_double_twist.json" }
+  , { "label": "Quasicrystal → Bands Twist (Clip)", "file": "quasicrystal_bands_twist.json" }
+  , { "label": "MDI Pattern → Rosette (Clip)", "file": "mdi_pattern_rosette_clip.json" }
+  , { "label": "Star Lattice → Bands (Clip)", "file": "star_lattice_bands_clip.json" }
+  , { "label": "Spirograph → Bands (Clip)", "file": "spiro_bands_clip.json" }
+  , { "label": "Sunflower Bands → Twist Warp", "file": "sunflower_bands_twist.json" }
+  , { "label": "Truchet Tiles → Bands (Clip)", "file": "truchet_bands_clip.json" }
+  , { "label": "De Jong Nebula", "file": "de_jong_nebula.json" }
+  , { "label": "Harmonograph Lissajous", "file": "harmonograph_lissajous.json" }
+  , { "label": "Isometric City Grid", "file": "isometric_city_grid.json" }
+  , { "label": "Isometric City → Path Warp", "file": "isometric_city_warp.json" }
+  , { "label": "Retro Pipes Circuit", "file": "retro_pipes_circuit.json" }
+  , { "label": "Star Lattice → Hatch (Clip)", "file": "star_lattice_hatch_clip_2.json" }
+  , { "label": "Voronoi Shatter → Bands (Clip)", "file": "voronoi_shatter_bands_2.json" }
+  , { "label": "Phyllotaxis Rings", "file": "phyllotaxis_rings.json" }
+  , { "label": "Truchet Tiles → Moiré (Clip)", "file": "truchet_dual_moire.json" }
+  , { "label": "Flow Ribbons Swirl", "file": "flow_ribbons_swirl.json" }
+  , { "label": "Quasicrystal Animated Phase", "file": "quasicrystal_anim_phase.json" }
 ]

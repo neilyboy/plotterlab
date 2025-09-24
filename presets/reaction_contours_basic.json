@@ -1,0 +1,35 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "rc-basic",
+      "name": "Reaction Contours (basic)",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "reactionContours",
+      "params": {
+        "cols": 180,
+        "rows": 120,
+        "steps": 600,
+        "feed": 0.036,
+        "kill": 0.062,
+        "diffU": 0.16,
+        "diffV": 0.08,
+        "dt": 1.0,
+        "iso": 0.5,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

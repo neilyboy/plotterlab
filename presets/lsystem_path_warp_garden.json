@@ -1,0 +1,49 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "lsys",
+      "name": "L-System Base",
+      "color": "#2dd4bf",
+      "visible": true,
+      "generator": "lsystem",
+      "params": {
+        "preset": "koch",
+        "iterations": 4,
+        "angleDeg": 60,
+        "step": 6,
+        "jitter": 0.0,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "warp",
+      "name": "Path Warp",
+      "color": "#f472b6",
+      "visible": true,
+      "generator": "pathWarp",
+      "params": {
+        "srcLayerId": "",
+        "srcToPrevious": true,
+        "amp": 3.5,
+        "scale": 0.02,
+        "step": 1.2,
+        "copies": 1,
+        "rotateFlow": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

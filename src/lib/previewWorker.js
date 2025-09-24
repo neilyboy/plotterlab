@@ -4,7 +4,7 @@
 
 import { computeRendered } from './renderer.js'
 import { polylineToPath } from './geometry.js'
-import { orderPolylines, joinPolylines } from './pathopt.js'
+import { applyPathPlanning } from './pipeline/decorators.js'
 
 self.onmessage = async (e) => {
   const { id, layers, doc, mdiCache, bitmaps, quality, optimizeJoin } = e.data || {}
@@ -23,16 +23,8 @@ self.onmessage = async (e) => {
       self.postMessage({ id, type: 'progress', progress: pct, detail })
     })
     const paths = outputs.map(({ layer, polylines }) => {
-      let polys = polylines || []
-      // The preview can optionally apply path ordering and joining to reflect the final export.
-      // This is heavier, so it's gated by the same settings as G-code export.
-      if (doc.optimize && doc.optimize !== 'none') {
-        polys = orderPolylines(polys, doc.optimize, doc.startX, doc.startY)
-      }
-      if (optimizeJoin) {
-        polys = joinPolylines(polys)
-      }
-      return { layer, d: polys.map(polylineToPath).join(' ') }
+      const planned = applyPathPlanning(polylines || [], doc || {}, Boolean(optimizeJoin))
+      return { layer, d: planned.map(polylineToPath).join(' ') }
     })
     self.postMessage({ id, type: 'done', outputs, paths })
   } catch (err) {

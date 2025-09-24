@@ -1,0 +1,28 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "top-left"
+  },
+  "layers": [
+    {
+      "id": "maze1",
+      "name": "Maze Classic",
+      "color": "#e5e7eb",
+      "visible": true,
+      "generator": "maze",
+      "params": {
+        "cols": 28,
+        "rows": 20,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

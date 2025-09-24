@@ -1,0 +1,8 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"rs1","name":"Reaction Strokes C","color":"#00AEEF","visible":true,"generator":"reactionStrokes","params":{"cols":150,"rows":105,"steps":420,"feed":0.036,"kill":0.062,"diffU":0.16,"diffV":0.08,"dt":1.0,"seedsX":34,"seedsY":24,"minSpacing":2.4,"stepLen":1.1,"maxSteps":620,"vMin":0.18,"vMax":0.82,"jitter":0.22,"margin":20,"simplifyTol":0}},
+    {"id":"rs2","name":"Reaction Strokes M","color":"#EC008C","visible":true,"generator":"reactionStrokes","params":{"cols":150,"rows":105,"steps":420,"feed":0.036,"kill":0.062,"diffU":0.16,"diffV":0.08,"dt":1.0,"seedsX":36,"seedsY":26,"minSpacing":2.4,"stepLen":1.1,"maxSteps":640,"vMin":0.18,"vMax":0.82,"jitter":0.24,"margin":20,"simplifyTol":0}},
+    {"id":"rs3","name":"Reaction Strokes Y","color":"#FFF200","visible":true,"generator":"reactionStrokes","params":{"cols":150,"rows":105,"steps":420,"feed":0.036,"kill":0.062,"diffU":0.16,"diffV":0.08,"dt":1.0,"seedsX":38,"seedsY":28,"minSpacing":2.4,"stepLen":1.1,"maxSteps":660,"vMin":0.18,"vMax":0.82,"jitter":0.26,"margin":20,"simplifyTol":0}}
+  ]
+}

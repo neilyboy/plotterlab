@@ -1,0 +1,58 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "qc",
+      "name": "Quasicrystal Field",
+      "color": "#FFF200",
+      "visible": true,
+      "generator": "quasicrystalContours",
+      "params": {
+        "waves": 9,
+        "freq": 0.085,
+        "contrast": 1.28,
+        "phase": 0,
+        "cols": 180,
+        "rows": 120,
+        "iso": 0.0,
+        "rotateDeg": 8,
+        "warp": 0.12,
+        "animatePhase": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "burst",
+      "name": "Starburst Overlay",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "polarStarburst",
+      "params": {
+        "spikes": 72,
+        "spreadDeg": 6,
+        "linesPerSpike": 1,
+        "inner": 8,
+        "outer": null,
+        "jitterDeg": 2,
+        "lengthJitter": 0.1,
+        "centerX": null,
+        "centerY": null,
+        "clipToPrevious": true,
+        "clipRule": "even-odd",
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

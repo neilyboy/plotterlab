@@ -2,81 +2,9 @@
 // Generates polylines for all visible layers using provided params
 
 import { simplifyPolylines } from './simplify.js'
-import { hatchFill } from './generators/hatchFill.js'
-import { halftone } from './generators/halftone.js'
-import { mdiPattern } from './generators/mdiPattern.js'
-import { mdiIconField } from './generators/mdiIconField.js'
-import { pixelMosaic } from './generators/pixelMosaic.js'
-import { isoContours } from './generators/isoContours.js'
-import { superformulaRings } from './generators/superformula.js'
-import { waveMoire } from './generators/waveMoire.js'
-import { streamlines } from './generators/streamlines.js'
-import { reactionContours } from './generators/reactionContours.js'
-import { quasicrystalContours } from './generators/quasicrystalContours.js'
-import { stripeBands } from './generators/stripeBands.js'
-import { polarStarburst } from './generators/polarStarburst.js'
-import { flowField } from './generators/flowField.js'
-import { flowRibbons } from './generators/flowRibbons.js'
-import { retroPipes } from './generators/retroPipes.js'
-import { starLattice } from './generators/starLattice.js'
-import { spirograph } from './generators/spirograph.js'
-import { isometricCity } from './generators/isometricCity.js'
-import { voronoiShatter } from './generators/voronoiShatter.js'
-import { svgImport } from './generators/svgImport.js'
-import { lsystem } from './generators/lsystem.js'
-import { phyllotaxis } from './generators/phyllotaxis.js'
-import { truchet } from './generators/truchet.js'
-import { hilbert } from './generators/hilbert.js'
-import { pathWarp } from './generators/pathWarp.js'
-import { imageContours } from './generators/imageContours.js'
-import { poissonStipple } from './generators/poissonStipple.js'
-import { tspArt } from './generators/tspArt.js'
-import { harmonograph } from './generators/harmonograph.js'
-import { deJong } from './generators/deJong.js'
-import { maze } from './generators/maze.js'
-import { reactionStrokes } from './generators/reactionStrokes.js'
-import { clifford } from './generators/clifford.js'
-import { sunflowerBands } from './generators/sunflowerBands.js'
-import { combinator } from './generators/combinator.js'
+import { getGenerators } from './generators/registry.js'
 
-const GENERATORS = {
-  spirograph: { name: 'Spirograph', fn: spirograph, params: {} },
-  polarStarburst: { name: 'Polar Starburst', fn: polarStarburst, params: {} },
-  flowRibbons: { name: 'Flow Ribbons', fn: flowRibbons, params: {} },
-  mdiIconField: { name: 'MDI Icon Field', fn: mdiIconField, params: {} },
-  hatchFill: { name: 'Hatch Fill', fn: hatchFill, params: {} },
-  mdiPattern: { name: 'MDI Pattern', fn: mdiPattern, params: {} },
-  flowField: { name: 'Flow Field', fn: flowField, params: {} },
-  voronoiShatter: { name: 'Voronoi Shatter', fn: voronoiShatter, params: {} },
-  pixelMosaic: { name: 'Pixel Mosaic', fn: pixelMosaic, params: {} },
-  halftone: { name: 'Halftone / Dither', fn: halftone, params: {} },
-  isometricCity: { name: 'Isometric City', fn: isometricCity, params: {} },
-  isoContours: { name: 'Iso Contours', fn: isoContours, params: {} },
-  superformulaRings: { name: 'Superformula Rings', fn: superformulaRings, params: {} },
-  waveMoire: { name: 'Wave Moiré', fn: waveMoire, params: {} },
-  streamlines: { name: 'Streamlines', fn: streamlines, params: {} },
-  reactionContours: { name: 'Reaction Contours', fn: reactionContours, params: {} },
-  quasicrystalContours: { name: 'Quasicrystal Contours', fn: quasicrystalContours, params: {} },
-  stripeBands: { name: 'Stripe Bands', fn: stripeBands, params: {} },
-  starLattice: { name: 'Star Lattice', fn: starLattice, params: {} },
-  retroPipes: { name: 'Retro Pipes', fn: retroPipes, params: {} },
-  svgImport: { name: 'SVG Import', fn: svgImport, params: {} },
-  lsystem: { name: 'L-system', fn: lsystem, params: {} },
-  phyllotaxis: { name: 'Phyllotaxis', fn: phyllotaxis, params: {} },
-  truchet: { name: 'Truchet Tiles', fn: truchet, params: {} },
-  hilbert: { name: 'Hilbert Curve', fn: hilbert, params: {} },
-  pathWarp: { name: 'Path Warp', fn: pathWarp, params: {} },
-  imageContours: { name: 'Image Contours', fn: imageContours, params: {} },
-  poissonStipple: { name: 'Poisson Stipple', fn: poissonStipple, params: {} },
-  tspArt: { name: 'TSP Art', fn: tspArt, params: {} }
-  , harmonograph: { name: 'Harmonograph', fn: harmonograph, params: {} }
-  , deJong: { name: 'De Jong Attractor', fn: deJong, params: {} }
-  , maze: { name: 'Maze', fn: maze, params: {} }
-  , reactionStrokes: { name: 'Reaction Strokes', fn: reactionStrokes, params: {} }
-  , clifford: { name: 'Clifford Attractor', fn: clifford, params: {} }
-  , sunflowerBands: { name: 'Sunflower Bands', fn: sunflowerBands, params: {} }
-  , combinator: { name: 'Combinator', fn: combinator, params: {} }
-}
+// Generators are provided by the central registry (see ./generators/registry.js)
 
 // Geometry helpers for global clipping
 function pointInPolygon(p, poly) {
@@ -309,6 +237,12 @@ function scaleParamsForPreview(genKey, params, q) {
   if (genKey === 'hatchFill' && typeof out.spacing === 'number') {
     out.spacing = Math.max(0.1, out.spacing / Math.max(0.5, q))
   }
+  // Keep reactionContours plausible even at low preview quality by enforcing minimums
+  if (genKey === 'reactionContours') {
+    if (typeof out.steps === 'number') out.steps = Math.max(200, Math.floor(out.steps))
+    if (typeof out.cols === 'number') out.cols = Math.max(90, Math.floor(out.cols))
+    if (typeof out.rows === 'number') out.rows = Math.max(60, Math.floor(out.rows))
+  }
   if (genKey === 'halftone') {
     const clampQ = Math.max(0.35, Math.min(1, q))
     if (typeof out.spacing === 'number' && Number.isFinite(out.spacing)) {
@@ -331,6 +265,7 @@ function scaleParamsForPreview(genKey, params, q) {
 }
 
 export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, quality = 1, progressCb) {
+  const REGISTRY = getGenerators()
   // Some generators already constrain to page/margin rect; skip global clip for them to avoid
   // exploding segment counts (e.g., halftone scanlines sampled at small steps).
   const skipGlobalClip = (genKey) => genKey === 'halftone'
@@ -341,7 +276,7 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
     if (found) return found.polylines
     const tgt = layersArg.find(l => l.id === lid)
     if (!tgt || !tgt.visible) return []
-    const gen2 = GENERATORS[tgt.generator]
+    const gen2 = REGISTRY[tgt.generator]
     if (!gen2) return []
     let hadInnerProgress = false
     try {
@@ -386,7 +321,7 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
   let idx = 0
   for (const layer of layersArg) {
     if (!layer.visible) { outputs.push({ layer, polylines: [] }); idx++; progressCb && progressCb({ pct: Math.min(1, total? idx/total : 1), idx, total, layerName: layer?.name || '', layerId: layer?.id }); continue }
-    const gen = GENERATORS[layer.generator]
+    const gen = REGISTRY[layer.generator]
     if (!gen) { outputs.push({ layer, polylines: [] }); idx++; progressCb && progressCb({ pct: Math.min(1, total? idx/total : 1), idx, total, layerName: layer?.name || '', layerId: layer?.id }); continue }
     try {
       let extra = {}

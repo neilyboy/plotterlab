@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"bands","name":"Bands","color":"#FFF200","visible":true,"generator":"stripeBands","params":{"cols":180,"rows":120,"levels":60,"isoStart":-0.9,"isoEnd":0.9,"freqX":0.08,"freqY":0.06,"radialFreq":0.0,"radialAmp":0.0,"angleDeg":12,"warp":0.25,"margin":20,"simplifyTol":0}},
+    {"id":"flow","name":"Streamlines (clipped)","color":"#00AEEF","visible":true,"generator":"streamlines","params":{"seedsX":36,"seedsY":26,"minSpacing":2.6,"stepLen":1.3,"maxSteps":520,"noiseScale":0.014,"curl":1.0,"jitter":0.35,"followOnly":false,"clipToPrevious":true,"clipRule":"union","margin":20,"simplifyTol":0}}
+  ]
+}

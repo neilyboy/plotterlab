@@ -1,0 +1,105 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 20,
+    "bleed": 0,
+    "strokeWidth": 0.9,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "super-A",
+      "name": "Superformula A",
+      "color": "#00AEEF",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 10,
+        "a": 1,
+        "b": 1,
+        "n1": 0.25,
+        "n2": 0.25,
+        "n3": 0.25,
+        "rings": 60,
+        "steps": 1000,
+        "inner": 0.10,
+        "rotateDeg": 8,
+        "morph": 0.20,
+        "twistDeg": -16,
+        "n23Lock": true,
+        "mRound": true,
+        "mEven": false,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "super-B",
+      "name": "Superformula B",
+      "color": "#EC008C",
+      "visible": true,
+      "generator": "superformulaRings",
+      "params": {
+        "m": 12,
+        "a": 1,
+        "b": 1,
+        "n1": 0.18,
+        "n2": 0.30,
+        "n3": 0.30,
+        "rings": 64,
+        "steps": 1100,
+        "inner": 0.10,
+        "rotateDeg": -6,
+        "morph": 0.28,
+        "twistDeg": 18,
+        "n23Lock": false,
+        "mRound": true,
+        "mEven": true,
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "combo",
+      "name": "Combinator Union",
+      "color": "#e5e7eb",
+      "visible": true,
+      "generator": "combinator",
+      "params": {
+        "srcA": "super-A",
+        "srcB": "super-B",
+        "op": "union",
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    },
+    {
+      "id": "bands",
+      "name": "Stripe Bands (clipped)",
+      "color": "#FFF200",
+      "visible": true,
+      "generator": "stripeBands",
+      "params": {
+        "cols": 180,
+        "rows": 120,
+        "levels": 64,
+        "isoStart": -0.9,
+        "isoEnd": 0.9,
+        "freqX": 0.08,
+        "freqY": 0.06,
+        "radialFreq": 0.035,
+        "radialAmp": 0.6,
+        "angleDeg": 0,
+        "warp": 0.2,
+        "clipToPrevious": true,
+        "clipRule": "even-odd",
+        "margin": 20,
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

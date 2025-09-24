@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"rose","name":"Rosette","color":"#EC008C","visible":true,"generator":"superformulaRings","params":{"m":11,"a":1,"b":1,"n1":0.24,"n2":0.26,"n3":0.26,"rings":52,"steps":940,"inner":0.10,"rotateDeg":-4,"morph":0.22,"twistDeg":10,"n23Lock":true,"mRound":true,"mEven":false,"margin":20,"simplifyTol":0}},
+    {"id":"px","name":"Pixel Mosaic (clipped)","color":"#e5e7eb","visible":true,"generator":"pixelMosaic","params":{"cols":32,"rows":24,"density":0.62,"jitter":0.05,"style":"squares","levels":3,"invert":false,"preserveAspect":true,"clipToPrevious":true,"clipRule":"union","margin":20,"simplifyTol":0}}
+  ]}

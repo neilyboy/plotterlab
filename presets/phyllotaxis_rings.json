@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":0.9,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"phy","name":"Phyllotaxis Rings","color":"#e5e7eb","visible":true,"generator":"phyllotaxis","params":{"count":1600,"spacing":3.0,"angleDeg":137.507764,"connect":true,"jitter":0.0,"dotSize":1.3,"margin":20,"simplifyTol":0}}
+  ]
+}

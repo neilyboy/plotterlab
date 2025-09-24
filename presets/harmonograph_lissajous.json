@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"hg","name":"Harmonograph Lissajous","color":"#2dd4bf","visible":true,"generator":"harmonograph","params":{"Ax":120,"Ay":80,"fx":0.215,"fy":0.185,"px":0,"py":1.5708,"dx":0.012,"dy":0.012,"tMax":65,"steps":9000,"margin":20,"simplifyTol":0}}
+  ]
+}

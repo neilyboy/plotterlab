@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.1,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"rp","name":"Retro Pipes Circuit","color":"#00AEEF","visible":true,"generator":"retroPipes","params":{"cols":28,"rows":18,"runs":3,"steps":260,"turnProb":0.34,"round":2,"margin":20,"simplifyTol":0}}
+  ]
+}
