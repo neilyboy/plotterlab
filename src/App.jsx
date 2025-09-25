@@ -1,13 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { saveAs } from 'file-saver'
+  // Examples are now handled by <ExamplesPanel/>
 import JSZip from 'jszip'
 import { mdiContentSave, mdiPlus, mdiDelete, mdiEye, mdiEyeOff, mdiDownload, mdiShuffleVariant, mdiArrowUp, mdiArrowDown, mdiCrosshairsGps, mdiDotsVertical, mdiArrowCollapseVertical, mdiArrowExpandVertical, mdiFileDocumentOutline, mdiExportVariant, mdiLightbulbOutline, mdiLayersOutline, mdiLayersPlus, mdiStarPlus, mdiStar, mdiStarOutline, mdiSwapHorizontal, mdiFolderOpen, mdiRefresh, mdiClose, mdiImageMultipleOutline, mdiPalette, mdiFitToPageOutline, mdiSelectAll, mdiVectorSelection, mdiEraser, mdiStarOff, mdiCheck, mdiVectorSquare, mdiZipBox, mdiMinus, mdiFileCode } from '@mdi/js'
 import { Icon } from './components/Icon.jsx'
 import Select from './components/Select.jsx'
 import ExamplesPanel from './components/panels/ExamplesPanel.jsx'
+import LayersPanel from './components/panels/LayersPanel.jsx'
+import ToolsPanel from './components/panels/ToolsPanel.jsx'
+import ImportPanel from './components/panels/ImportPanel.jsx'
+import ExportPanel from './components/panels/ExportPanel.jsx'
 import { polylineToPath } from './lib/geometry.js'
 import { buildSVG } from './lib/svg.js'
 import { toGcode } from './lib/gcode.js'
+import { getExporter } from './lib/exporters/index.js'
 import { spirograph } from './lib/generators/spirograph.js'
 import { starLattice } from './lib/generators/starLattice.js'
 import { isometricCity } from './lib/generators/isometricCity.js'
@@ -142,6 +148,8 @@ const COLOR_OPTIONS = PALETTE.map(p => ({ label: p.name, value: p.value }))
         return {}
     }
   }
+
+
 
   // Distance from point to segment and to polygon edges
   const distPtSeg = (px, py, ax, ay, bx, by) => {
@@ -319,6 +327,8 @@ export default function App() {
   const [uiTab, setUiTab] = useState(() => {
     try { return localStorage.getItem('plotterlab:uiTab') || 'tools' } catch { return 'tools' }
   })
+  // View preset selection for dropdown (ephemeral)
+  const [viewPresetSel, setViewPresetSel] = useState('')
   const [layerMenuId, setLayerMenuId] = useState(null)
   const [groupOpen, setGroupOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('plotterlab:groupOpen')) || {} } catch { return {} }
@@ -429,7 +439,6 @@ export default function App() {
     setDoc(d => ({ ...d, paperSize: 'custom' }))
   }
 
-  // Examples are now handled by <ExamplesPanel/>
   const loadExample = async (file) => {
     if (!file) return
     try {
@@ -466,6 +475,35 @@ export default function App() {
   const [picker, setPicker] = useState({ active: false, targetLayerId: null })
   // On-canvas transform gizmo (for svgImport layers)
   const [transform, setTransform] = useState({ active: false, layerId: null })
+
+  // Compute a separation that fits isoContours vertically inside the page.
+  const fitIsoSeparation = (layerId) => {
+    try {
+      setLayers(ls => ls.map(l => {
+        if (l.id !== layerId) return l;
+        if (l.generator !== 'isoContours') return l;
+        const p = l.params || {};
+        const lobes = Math.max(1, Math.floor(p.lobes ?? 2));
+        const sigmaY = Number.isFinite(p.sigmaY) ? Number(p.sigmaY) : 55;
+        const my = Number.isFinite(doc.marginY) ? Number(doc.marginY) : Number(doc.margin)||0;
+        const H = Math.max(10, Number(doc.height) - 2*my);
+        // 3-sigma envelope around extreme lobes; overall height ~ (lobes-1)*sep + 2*k*sigmaY
+        const k = 3;
+        const available = Math.max(10, H - 2*k*sigmaY);
+        let sep = lobes > 1 ? (available / (lobes - 1)) : 0;
+        // Clamp to sensible bounds
+        const maxSep = H / Math.max(1, lobes);
+        sep = Math.max(6, Math.min(sep, maxSep));
+        const rounded = Math.round(sep * 10) / 10;
+        return { ...l, params: { ...p, separation: rounded } };
+      }));
+      showToast('Separation fitted');
+    } catch (e) {
+      console.error('fitIsoSeparation error', e);
+      showToast('Fit failed');
+    }
+  }
+
   // Iso Contours presets helper
   const isoPresetValues = (name) => {
     switch (name) {
@@ -639,6 +677,8 @@ export default function App() {
       if (e.target) e.target.value = ''
     }
   }
+  // Open photo picker with desired mode (mono|cmyk)
+  const onPickPhoto = (mode) => { setPhotoMode(mode); photoRef.current?.click() }
   const stageRef = useRef(null)
   const fittingRef = useRef(false)
   const lastFitRef = useRef({ w: 0, h: 0 })
@@ -1375,7 +1415,18 @@ export default function App() {
   }, [rendered])
 
   // ViewBox + styling helpers
-  const viewBox = useMemo(() => `0 0 ${doc.width} ${doc.height}`, [doc.width, doc.height])
+  // Tie SVG viewBox to previewZoom and pan, so zooming/panning affects the preview.
+  const viewBox = useMemo(() => {
+    const z = Math.max(0.2, Number(doc.previewZoom) || 1)
+    const vw = doc.width / z
+    const vh = doc.height / z
+    let minX = Number(doc.previewPanX) || 0
+    let minY = Number(doc.previewPanY) || 0
+    // Clamp within document bounds
+    minX = Math.max(0, Math.min(Math.max(0, doc.width - vw), minX))
+    minY = Math.max(0, Math.min(Math.max(0, doc.height - vh), minY))
+    return `${minX} ${minY} ${vw} ${vh}`
+  }, [doc.width, doc.height, doc.previewZoom, doc.previewPanX, doc.previewPanY])
   const gcodeChipStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', borderColor: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(2px)' }), [])
   // Grid colors and lines
   const gridDotColor = useMemo(() => {
@@ -1509,108 +1560,39 @@ export default function App() {
   const transformOverlay = null
 
   const downloadGcode = () => {
-    setSaveMessage('Preparing G-code...');
-    setIsSaving(true);
-    setSaveProgress(0);
-    showToast('Preparing G-code...')
+  setSaveMessage('Preparing G-code...');
+  setIsSaving(true);
+  setSaveProgress(0);
+  showToast('Preparing G-code...')
 
-    setTimeout(async () => {
-      try {
-        // Regenerate at full quality for export
-        const zip = new JSZip()
-        const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
+  setTimeout(async () => {
+    try {
+      const zip = new JSZip()
+      const full = renderAll(layers, doc, mdiCache, bitmaps, 1)
 
-        // Base options for G-code output, derived from current document settings
-        const optsBase = {
-          feed: doc.feed ?? 1800,
-          travel: doc.travel ?? 3000,
-          scale: 1,
-          penUp: doc.penUp ?? 5,
-          penDown: doc.penDown ?? 0,
-          safeZ: doc.safeZ ?? (doc.penUp ?? 5),
-          penMode: doc.penMode || 'servo',
-          servoUp: doc.servoUp || 'M3 S180',
-          servoDown: doc.servoDown || 'M3 S0',
-          delayAfterUp: doc.delayAfterUp ?? 0,
-          delayAfterDown: doc.delayAfterDown ?? 0,
-          startX: (doc.startUseMargin ? (doc.margin ?? 0) : (doc.startX ?? 0)),
-          startY: (doc.startUseMargin ? (doc.margin ?? 0) : (doc.startY ?? 0)),
-          originX: 0,
-          originY: 0,
-        }
-
-        const mode = doc.exportMode || 'layers'
-
-        if (mode === 'layers') {
-          // One G-code file per visible layer
-          for (const entry of full) {
-            if (!entry || !entry.layer || !entry.layer.visible) continue
-            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
-            if (!planned.length) continue
-            const gcode = toGcode(planned, { ...optsBase, includeHeader: true, includeFooter: true })
-            const safe = (entry.layer.name || 'layer').replace(/\s+/g, '_').replace(/[^A-Za-z0-9_\-]/g, '')
-            zip.file(`${safe}.gcode`, gcode)
-          }
-        } else if (mode === 'colors') {
-          // Group polylines across all layers by color
-          const colorMap = {}
-          for (const entry of full) {
-            if (!entry || !entry.layer || !entry.layer.visible) continue
-            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
-            if (!planned.length) continue
-            const key = String(entry.layer.color || '#000000').toLowerCase()
-            if (!colorMap[key]) colorMap[key] = []
-            colorMap[key].push(...planned)
-          }
-          for (const [color, polys] of Object.entries(colorMap)) {
-            if (!polys.length) continue
-            const gcode = toGcode(polys, { ...optsBase, includeHeader: true, includeFooter: true })
-            const safeColor = color.replace('#', '')
-            zip.file(`color_${safeColor}.gcode`, gcode)
-          }
-        } else {
-          // Combined into a single file, optional pause between layers
-          let first = true
-          let combined = ''
-          const pauseBetween = (doc.pauseCombined ?? true)
-          const pauseCode = String(doc.pauseCode ?? 'M0')
-          const pauseMsg = String(doc.pauseMessage ?? 'Change pen to <color>')
-
-          for (let i = 0; i < full.length; i++) {
-            const entry = full[i]
-            if (!entry || !entry.layer || !entry.layer.visible) continue
-            const planned = applyPathPlanning(entry.polylines, doc, doc.optimizeJoin)
-            if (!planned.length) continue
-            const part = toGcode(planned, { ...optsBase, includeHeader: first, includeFooter: false })
-            combined += part
-            // Insert a pause between visible layers if requested
-            const hasNext = full.slice(i + 1).some(e => e && e.layer && e.layer.visible)
-            if (pauseBetween && hasNext) {
-              const colorText = String(entry.layer.color || '').toUpperCase()
-              combined += `\n; Pause for next layer\n; ${pauseMsg.replace('<color>', colorText)}\n${pauseCode}\n`
-            }
-            first = false
-          }
-          // Footer to finish program
-          combined += toGcode([], { ...optsBase, includeHeader: false, includeFooter: true })
-          zip.file(`combined.gcode`, combined)
-        }
-
-        setSaveMessage('Zipping G-code...');
-        const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
-          setSaveProgress(metadata.percent)
-        })
-        setSaveMessage('Saving file...');
-        saveAs(blob, `gcode_${doc.seed}.zip`)
-        showToast('G-code saved')
-      } catch (e) {
-        console.error('G-code export failed', e)
-        showToast('G-code export failed')
-      } finally {
-        setIsSaving(false)
+      const exporter = getExporter(doc.exportMode || 'layers')
+      const files = exporter({ entries: full, doc, applyPathPlanning, toGcode })
+      for (const f of files) {
+        if (!f || !f.name) continue
+        zip.file(f.name, f.content || '')
       }
-    }, 16)
-  }
+
+      setSaveMessage('Zipping G-code...');
+      const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        setSaveProgress(metadata.percent)
+      })
+      setSaveMessage('Saving file...');
+      saveAs(blob, `gcode_${doc.seed}.zip`)
+      showToast('G-code saved')
+    } catch (e) {
+      console.error('G-code export failed', e)
+      showToast('G-code export failed')
+    } finally {
+      setIsSaving(false)
+    }
+  }, 16)
+}
+
 
   const downloadLayerSvg = (layerId) => {
     setSaveMessage('Saving SVG...')
@@ -1680,6 +1662,35 @@ export default function App() {
     const all = rendered.flatMap(r => r.layer.visible ? r.polylines : [])
     const b = boundsOfPolys(all)
     fitBounds(b)
+  }
+
+  // Saved view presets (A/B) helpers
+  const saveView = (slot) => {
+    try {
+      const data = {
+        z: Math.max(0.2, Math.min(8, Number(doc.previewZoom) || 1)),
+        x: Number(doc.previewPanX) || 0,
+        y: Number(doc.previewPanY) || 0
+      }
+      localStorage.setItem(`plotterlab:view:${slot}`, JSON.stringify(data))
+      showToast(`View saved ${slot.toUpperCase()}`)
+    } catch {}
+  }
+  const loadView = (slot) => {
+    try {
+      const raw = localStorage.getItem(`plotterlab:view:${slot}`)
+      if (!raw) { showToast(`No view saved ${slot.toUpperCase()}`); return }
+      const v = JSON.parse(raw)
+      if (!v || !Number.isFinite(v.z)) { showToast('Invalid saved view'); return }
+      setDoc(d => ({
+        ...d,
+        previewZoom: Math.max(0.2, Math.min(8, Number(v.z) || 1)),
+        previewPanX: Number(v.x) || 0,
+        previewPanY: Number(v.y) || 0,
+        previewAutoFit: false
+      }))
+      showToast(`View loaded ${slot.toUpperCase()}`)
+    } catch {}
   }
 
   const fitToLayer = (layerId) => {
@@ -1812,292 +1823,51 @@ export default function App() {
 
         {uiTab==='tools' && (
         <section className="space-y-3">
-            <div className="rounded-lg p-3 bg-black/20 border border-white/5">
-              <h2 className="font-medium mb-2 flex items-center gap-2"><Icon path={mdiFileDocumentOutline}/> <span>Document</span></h2>
-              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                <label className="flex flex-col gap-1" title="Preset paper sizes. 'Custom' uses your Width/Height below.">Paper Size
-                  <Select value={doc.paperSize || 'custom'} onChange={(v)=>applyPaperSize(v)}
-                    options={paperOptions.map(p=>({label:p.label, value:p.key}))}
-                  />
-                </label>
-              <label className="flex flex-col gap-1" title="Rotate the page; swaps Width/Height when needed.">Orientation
-                <Select value={doc.orientation || 'landscape'} onChange={(v)=>applyOrientation(v)}
-                  options={[{label:'Landscape', value:'landscape'},{label:'Portrait', value:'portrait'}]}
-                />
-              </label>
-              <div className="col-span-2 lg:col-span-3 flex flex-wrap gap-2 items-center">
-                <button className="btn" onClick={saveCurrentPaperAs} title="Save current paper size">
-                  {compactUI ? (<><Icon path={mdiContentSave}/> Save</>) : (<><Icon path={mdiContentSave}/> Save Size</>)}
-                </button>
-                <button className="btn" onClick={deleteCurrentCustomPaper} disabled={!String(doc.paperSize||'').startsWith('CUST_')} title="Delete current custom size">
-                  {compactUI ? (<><Icon path={mdiDelete}/> Delete</>) : (<><Icon path={mdiDelete}/> Delete</>)}
-                </button>
-                <button className="btn" onClick={()=>toggleFavoritePaper(doc.paperSize || '')} disabled={!doc.paperSize || doc.paperSize==='custom'} title={paperFavorites.includes(doc.paperSize||'') ? 'Remove favorite size' : 'Add favorite size'}>
-                  {paperFavorites.includes(doc.paperSize||'')
-                    ? (compactUI ? (<><Icon path={mdiStar}/> Unfav</>) : (<><Icon path={mdiStar}/> Unfavorite</>))
-                    : (compactUI ? (<><Icon path={mdiStarPlus}/> Fav</>) : (<><Icon path={mdiStarPlus}/> Add Favorite</>))}
-                </button>
-                <button className="btn" title="Swap Width / Height" onClick={()=>{
-                  setDoc(d=>{
-                    const w = d.height, h = d.width
-                    const ori = w >= h ? 'landscape' : 'portrait'
-                    if (d.startPreset && d.startPreset !== 'custom') {
-                      const mx = Number.isFinite(d.marginX) ? d.marginX : d.margin
-                      const my = Number.isFinite(d.marginY) ? d.marginY : d.margin
-                      const { x, y } = computeStart(d.startPreset, w, h, mx, my, d.startUseMargin)
-                      return { ...d, width: w, height: h, orientation: ori, paperSize: 'custom', startX: x, startY: y }
-                    }
-                    return { ...d, width: w, height: h, orientation: ori, paperSize: 'custom' }
-                  })
-                }}>{compactUI ? (<><Icon path={mdiSwapHorizontal}/> Swap</>) : (<><Icon path={mdiSwapHorizontal}/> Swap W/H</>)}</button>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-2 gap-2">
-                <label className="flex flex-col gap-1" title="Page width (mm). Setting values switches to Custom size.">Width
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:width'] ?? String(doc.width))}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:width']: txt }))
-                      const w = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(w)) {
-                        setDoc(d=>{
-                          if (d.startPreset && d.startPreset !== 'custom') {
-                            const mx = Number.isFinite(d.marginX) ? d.marginX : d.margin
-                            const my = Number.isFinite(d.marginY) ? d.marginY : d.margin
-                            const { x, y } = computeStart(d.startPreset, w, d.height, mx, my, d.startUseMargin)
-                            return { ...d, width: w, paperSize: 'custom', startX: x, startY: y }
-                          }
-                          return { ...d, width: w, paperSize: 'custom' }
-                        })
-                      }
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:width']; return n })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1" title="Page height (mm). Setting values switches to Custom size.">Height
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:height'] ?? String(doc.height))}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:height']: txt }))
-                      const h = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(h)) {
-                        setDoc(d=>{
-                          if (d.startPreset && d.startPreset !== 'custom') {
-                            const mx = Number.isFinite(d.marginX) ? d.marginX : d.margin
-                            const my = Number.isFinite(d.marginY) ? d.marginY : d.margin
-                            const { x, y } = computeStart(d.startPreset, d.width, h, mx, my, d.startUseMargin)
-                            return { ...d, height: h, paperSize: 'custom', startX: x, startY: y }
-                          }
-                          return { ...d, height: h, paperSize: 'custom' }
-                        })
-                      }
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:height']; return n })}
-                  />
-                </label>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-2 gap-2">
-                <label className="flex flex-col gap-1" title="Uniform margin (mm) used by start presets and clipping.">Margin
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:margin'] ?? String(doc.margin))}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:margin']: txt }))
-                      const mVal = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(mVal)) {
-                        setDoc(d=>{
-                          const m = mVal
-                          if (d.startPreset && d.startPreset !== 'custom') {
-                            const mx = Number.isFinite(d.marginX) ? d.marginX : m
-                            const my = Number.isFinite(d.marginY) ? d.marginY : m
-                            const { x, y } = computeStart(d.startPreset, d.width, d.height, mx, my, d.startUseMargin)
-                            return { ...d, margin: m, startX: x, startY: y }
-                          }
-                          return { ...d, margin: m }
-                        })
-                      }
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:margin']; return n })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1" title="Optional overflow past the paper edge (mm) for exports.">Bleed (mm)
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:bleed'] ?? String(doc.bleed))}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:bleed']: txt }))
-                      const v = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(v)) setDoc(d=>({ ...d, bleed: Math.max(0, v) }))
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:bleed']; return n })}
-                  />
-                </label>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-2 gap-2">
-                <label className="flex flex-col gap-1" title="Override horizontal margin (mm). Falls back to Margin if blank.">Margin X (optional)
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:marginX'] ?? (Number.isFinite(doc.marginX)? String(doc.marginX) : ''))}
-                    placeholder={String(doc.margin)}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:marginX']: txt }))
-                      const v = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(v)) {
-                        setDoc(d=>{
-                          if (d.startPreset && d.startPreset !== 'custom') {
-                            const my = Number.isFinite(d.marginY) ? d.marginY : d.margin
-                            const { x, y } = computeStart(d.startPreset, d.width, d.height, v, my, d.startUseMargin)
-                            return { ...d, marginX: v, startX: x, startY: y }
-                          }
-                          return { ...d, marginX: v }
-                        })
-                      }
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:marginX']; return n })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1" title="Override vertical margin (mm). Falls back to Margin if blank.">Margin Y (optional)
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:marginY'] ?? (Number.isFinite(doc.marginY)? String(doc.marginY) : ''))}
-                    placeholder={String(doc.margin)}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:marginY']: txt }))
-                      const v = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(v)) {
-                        setDoc(d=>{
-                          if (d.startPreset && d.startPreset !== 'custom') {
-                            const mx = Number.isFinite(d.marginX) ? d.marginX : d.margin
-                            const { x, y } = computeStart(d.startPreset, d.width, d.height, mx, v, d.startUseMargin)
-                            return { ...d, marginY: v, startX: x, startY: y }
-                          }
-                          return { ...d, marginY: v }
-                        })
-                      }
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:marginY']; return n })}
-                  />
-                </label>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-3 gap-2">
-                <label className="flex flex-col gap-1" title="Stroke width (mm) used in preview and SVG export.">Stroke
-                  <input className="input" type="text" inputMode="decimal" value={(numEdit['D:stroke'] ?? String(doc.strokeWidth))}
-                    onChange={e=>{
-                      const txt = e.target.value
-                      setNumEdit(m=>({ ...m, ['D:stroke']: txt }))
-                      const v = parseFloat(txt)
-                      if (txt !== '' && Number.isFinite(v)) setDoc(d=>({...d, strokeWidth: v}))
-                    }}
-                    onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n['D:stroke']; return n })}
-                  />
-                </label>
-                <label className="flex items-center gap-2" title="Faster previews by reducing samples/steps. Use the Quality slider to trade speed for detail.">
-                  <input type="checkbox" className="w-4 h-4" checked={!!doc.fastPreview} onChange={e=>setDoc(d=>({...d,fastPreview:e.target.checked}))} />
-                  Fast Preview
-                </label>
-                <label className="flex flex-col gap-1" title="Preview quality factor (0.2–1). Lower values are faster but less detailed.">Quality
-                  <input className="input" type="range" min="0.2" max="1" step="0.05" value={doc.previewQuality} onChange={e=>setDoc(d=>({...d,previewQuality:+e.target.value}))} disabled={!doc.fastPreview} />
-                </label>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-1 min-[520px]:grid-cols-2 gap-3">
-                <label className={labelClass} title="Paper color used for preview background (also exported in SVG as background rectangle if desired).">
-                  <span>Paper Color</span>
-                  <div className="flex items-center gap-2">
-                    <input type="color" className="w-8 h-8 rounded border border-white/10" value={doc.bg} onChange={e=>setDoc(d=>({...d,bg:e.target.value}))} />
-                    {!superCompact && (<code className="text-[10px] opacity-70">{doc.bg}</code>)}
-                  </div>
-                </label>
-                <label className={labelClass} title="Viewport background color around the paper (for contrast and comfort).">
-                  <span>Viewport Background</span>
-                  <div className="flex items-center gap-2">
-                    <input type="color" className="w-8 h-8 rounded border border-white/10" value={doc.appBg} onChange={e=>setDoc(d=>({...d,appBg:e.target.value}))} />
-                    {!superCompact && (<code className="text-[10px] opacity-70">{doc.appBg}</code>)}
-                  </div>
-                </label>
-                <label className={labelClass} title="Preview-only color for the paper border (toggle below).">
-                  <span>Border Color</span>
-                  <div className="flex items-center gap-2">
-                    <input type="color" className="w-8 h-8 rounded border border-white/10" value={doc.paperBorderColor} onChange={e=>setDoc(d=>({...d,paperBorderColor:e.target.value}))} disabled={!doc.showPaperBorder} />
-                    {!superCompact && (<code className="text-[10px] opacity-70">{doc.paperBorderColor}</code>)}
-                  </div>
-                  <label className="mt-1 flex items-center gap-2 text-xs opacity-80">
-                    <input type="checkbox" className="w-4 h-4" checked={!!doc.showPaperBorder} onChange={e=>setDoc(d=>({...d,showPaperBorder:e.target.checked}))} />
-                    Show Paper Border
-                  </label>
-                </label>
-                <label className={labelClass} title="Preview-only color for the margin border (toggle below).">
-                  <span>Margin Border Color</span>
-                  <div className="flex items-center gap-2">
-                    <input type="color" className="w-8 h-8 rounded border border-white/10" value={doc.marginBorderColor} onChange={e=>setDoc(d=>({...d,marginBorderColor:e.target.value}))} disabled={!doc.showMarginBorder} />
-                    {!superCompact && (<code className="text-[10px] opacity-70">{doc.marginBorderColor}</code>)}
-                  </div>
-                  <label className="mt-1 flex items-center gap-2 text-xs opacity-80">
-                    <input type="checkbox" className="w-4 h-4" checked={!!doc.showMarginBorder} onChange={e=>setDoc(d=>({...d,showMarginBorder:e.target.checked}))} />
-                    Show Margin Border
-                  </label>
-                </label>
-              </div>
-              <div className="col-span-2 lg:col-span-3 grid grid-cols-1 gap-2">
-                <label className={labelClass} title="Clip the output to the paper or margin rectangle when exporting.">
-                  <span>Output Clip</span>
-                  <Select value={doc.clipOutput || 'none'} onChange={(v)=>setDoc(d=>({ ...d, clipOutput: v }))}
-                    options={[{label:'None', value:'none'},{label:'Paper', value:'paper'},{label:'Margin', value:'margin'}]}
-                  />
-                </label>
-              </div>
-              <div className="col-span-2 flex items-end gap-2">
-                <label className="flex-1 flex flex-col gap-1" title="Random seed used by many generators. Change then regenerate to explore.">Seed
-                  <input className="input" value={doc.seed} onChange={e=>setDoc(d=>({...d,seed:e.target.value}))}/>
-                </label>
-                <button className="btn" title="Randomize" onClick={regenerateSeed}><Icon path={mdiShuffleVariant}/></button>
-              </div>
-            </div>
-          </div>
+          <ToolsPanel
+            compactUI={compactUI}
+            superCompact={superCompact}
+            doc={doc}
+            setDoc={setDoc}
+            labelClass={labelClass}
+            paperOptions={paperOptions}
+            paperFavorites={paperFavorites}
+            saveCurrentPaperAs={saveCurrentPaperAs}
+            deleteCurrentCustomPaper={deleteCurrentCustomPaper}
+            toggleFavoritePaper={toggleFavoritePaper}
+            applyPaperSize={applyPaperSize}
+            applyOrientation={applyOrientation}
+            computeStart={computeStart}
+            numEdit={numEdit}
+            setNumEdit={setNumEdit}
+            regenerateSeed={regenerateSeed}
+          />
 
-          <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiImageMultipleOutline}/> <span>Import</span></h2></div>
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-2 items-start mt-2">
-            <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={onImageFilePicked} />
-            <div className="flex gap-2 items-center col-span-2 lg:col-span-2">
-              <button className="btn flex-1" onClick={()=>{ setPhotoMode('mono'); photoRef.current?.click() }}>
-                {compactUI ? (<><Icon path={mdiImageMultipleOutline}/> Mono</>) : (<><Icon path={mdiImageMultipleOutline}/> Photo → Mono Halftone</>)}
-              </button>
-              <button className="btn flex-1" onClick={()=>{ setPhotoMode('cmyk'); photoRef.current?.click() }}>
-                {compactUI ? (<><Icon path={mdiPalette}/> CMYK</>) : (<><Icon path={mdiPalette}/> Photo → CMYK Halftone</>)}
-              </button>
-              <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={onPhotoSelected} />
-            </div>
-          </div>
+          <ExamplesPanel
+            compactUI={compactUI}
+            onLoadExample={loadExample}
+          />
 
-          <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10"><h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiExportVariant}/> <span>Export</span></h2></div>
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 gap-2 items-start mt-2">
-            <div className="flex gap-2 col-span-2 lg:col-span-1">
-              <button className="btn flex-1" onClick={downloadSVGs} title="Export SVG Layers (ZIP)">
-                {compactUI ? (<><Icon path={mdiContentSave}/> SVG</>) : (<><Icon path={mdiContentSave}/> Export SVG Layers (ZIP)</>)}
-              </button>
-            </div>
-            <div className="flex gap-2 items-center col-span-2 lg:col-span-2">
-              <Select
-                className="flex-1"
-                value={doc.exportMode}
-                onChange={v=>setDoc(d=>({...d,exportMode:v}))}
-                prefix={<Icon path={doc.exportMode === 'combined' ? mdiFileCode : (doc.exportMode === 'colors' ? mdiPalette : mdiZipBox)} />}
-                variant="button"
-                tooltip="Choose how G-code files are grouped: Per Layer (ZIP), Per Color (ZIP), or a single Combined file."
-                options={[
-                  { label: '[ZIP] Per Layer', value: 'layers' },
-                  { label: '[ZIP] Per Color', value: 'colors' },
-                  { label: '[Single] Combined', value: 'combined' }
-                ]}
-              />
-              <button className="btn flex-1" onClick={downloadGcode} title="Export G-code using selected mode">
-                {compactUI ? (<><Icon path={mdiFileCode}/> G-code</>) : (<><Icon path={mdiFileCode}/> Export G-code</>)}
-              </button>
-            </div>
-            <div className="flex gap-2 items-center col-span-2 lg:col-span-2">
-              <button className="btn flex-1" onClick={exportPreset} title="Save Setup">
-                {compactUI ? (<><Icon path={mdiContentSave}/> Save</>) : (<><Icon path={mdiContentSave}/> Save Setup</>)}
-              </button>
-              <button className="btn flex-1" onClick={openImport} title="Load Setup">
-                {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Setup</>)}
-              </button>
-              <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleImport} />
-            </div>
-<ExamplesPanel            compactUI={compactUI}            onLoadExample={(file)=>loadExample(file)}            onSetDefault={(file)=>{ try { localStorage.setItem('plotterlab:defaultPreset', file); showToast('Default example set') } catch {} }}            onClearDefault={()=>{ try { localStorage.removeItem('plotterlab:defaultPreset'); showToast('Default example cleared') } catch {} }}          />
+          <ImportPanel
+            compactUI={compactUI}
+            imageRef={imageRef}
+            onImageFilePicked={onImageFilePicked}
+            photoRef={photoRef}
+            onPhotoSelected={onPhotoSelected}
+            onPickPhoto={onPickPhoto}
+          />
+
+          <ExportPanel
+  compactUI={compactUI}
+  exportMode={doc.exportMode}
+  onChangeExportMode={(v)=>setDoc(d=>({...d,exportMode:v}))}
+  onDownloadSVGs={downloadSVGs}
+  onDownloadGcode={downloadGcode}
+  onExportPreset={exportPreset}
+  onOpenImport={openImport}
+  fileRef={fileRef}
+  onHandleImport={handleImport}
+/>
+{doc.exportMode === 'combined' && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" className="w-4 h-4" checked={doc.pauseCombined ?? true} onChange={e=>setDoc(d=>({...d,pauseCombined:e.target.checked}))} />
@@ -2113,860 +1883,45 @@ export default function App() {
                 </label>
               </div>
             )}
-          </div>
         </section>
         )}
 
         {uiTab==='layers' && (
-          <>
-          <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur flex items-center justify-between py-2 mt-4 border-b border-white/10">
-            <h2 className="font-medium flex items-center gap-2"><Icon path={mdiLayersOutline}/> <span>Layers</span></h2>
-            <div className="flex gap-2">
-              <button className="btn" title="New Layer" onClick={addLayer}>
-                {compactUI ? (<Icon path={mdiLayersPlus}/>) : (<><Icon path={mdiLayersPlus}/> New Layer</>)}
-              </button>
-              <button className="btn" onClick={()=>setAllLayersCollapsed(true)} title="Collapse All">
-                {compactUI ? (<Icon path={mdiArrowCollapseVertical}/>) : (<><Icon path={mdiArrowCollapseVertical}/> Collapse All</>)}
-              </button>
-              <button className="btn" onClick={()=>setAllLayersCollapsed(false)} title="Expand All">
-                {compactUI ? (<Icon path={mdiArrowExpandVertical}/>) : (<><Icon path={mdiArrowExpandVertical}/> Expand All</>)}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {layers.map((layer, idx) => (
-              <div key={layer.id} className="rounded-lg border border-white/5 bg-black/20">
-                <header className={`relative flex items-center justify-between ${compactUI ? 'px-2 py-1' : 'px-3 py-2'} border-b border-white/5`}>
-                  <div className="flex items-center gap-2">
-                    <button className="icon" onClick={()=>toggleVisible(layer.id)} title={layer.visible? 'Hide' : 'Show'}>
-                      <Icon path={layer.visible? mdiEye : mdiEyeOff} />
-                    </button>
-                    <input className="bg-transparent outline-none text-sm font-medium" value={layer.name} onChange={e=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,name:e.target.value}:l))}/>
-                    {compactUI && (
-                      <span className="text-[10px] opacity-80 px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
-                        {GENERATORS[layer.generator]?.name || layer.generator}
-                      </span>
-                    )}
-                  </div>
-                  <div className={`flex flex-wrap items-center ${compactUI ? 'gap-1' : 'gap-2'}`}>
-                    <button className="icon" title={layer.uiCollapsed ? 'Expand' : 'Collapse'}
-                      onClick={()=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,uiCollapsed:!l.uiCollapsed}:l))}>
-                      <Icon path={layer.uiCollapsed ? mdiPlus : mdiMinus} />
-                    </button>
-                    {!compactUI && (
-                      <Select className="w-auto" value={layer.generator} onChange={v=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,generator:v,params:{...GENERATORS[v].params}}:l))}
-                        options={Object.entries(GENERATORS).map(([k,v])=>({ label: v.name, value: k }))}
-                        tooltip="Change this layer's generator. Switching resets its parameters to sensible defaults."
-                      />
-                    )}
-                    {compactUI ? (
-                      <input type="color" className="w-8 h-8 rounded border border-white/10 flex-shrink-0" value={layer.color} onChange={e=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,color:e.target.value}:l))} title="Pick color" />
-                    ) : (
-                      <>
-                        <Select className="w-auto" value={layer.color} onChange={v=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,color:v}:l))}
-                          options={COLOR_OPTIONS}
-                          tooltip="Choose a palette color. Use the picker next to it for a custom value."
-                        />
-                        <input type="color" className="w-8 h-8 rounded border border-white/10 flex-shrink-0" value={layer.color} onChange={e=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,color:e.target.value}:l))} title="Pick color" />
-                      </>
-                    )}
-                    {/* Status chips */}
-                    {(() => {
-                      const p = layer.params || {}
-                      let chip = null
-                      if (p.clipLayerId) {
-                        const src = layers.find(l=>l.id===p.clipLayerId)
-                        const mode = p.clipMode || 'all'
-                        const modeText = (mode === 'largest')
-                          ? 'Largest'
-                          : (mode === 'index'
-                              ? (Array.isArray(p.clipIndices) && p.clipIndices.length ? '#' + p.clipIndices.join(',#') : `#${Math.max(0, Math.floor(p.clipIndex||0))}`)
-                              : 'All')
-                        chip = `Clip: ${src ? src.name : 'Layer'} · ${modeText}`
-                      } else if (p.clipToPrevious) {
-                        const mode = p.clipMode || 'all'
-                        const modeText = (mode === 'largest')
-                          ? 'Largest'
-                          : (mode === 'index'
-                              ? (Array.isArray(p.clipIndices) && p.clipIndices.length ? '#' + p.clipIndices.join(',#') : `#${Math.max(0, Math.floor(p.clipIndex||0))}`)
-                              : 'All')
-                        chip = `Clip: Prev · ${modeText}`
-                      }
-                      return chip ? (<span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10">{chip}</span>) : null
-                    })()}
-                    {layer.generator === 'hatchFill' && layer.params?.cross && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10">Cross</span>
-                    )}
-                    {(() => {
-                      const p = layer.params || {}
-                      const rule = (p.clipRule || 'union')
-                      if (!p.clipLayerId && !p.clipToPrevious) return null
-                      if (rule === 'union') return null
-                      const label = rule === 'evenodd' ? 'Even-Odd' : (rule.charAt(0).toUpperCase()+rule.slice(1))
-                      return (<span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10">Rule: {label}</span>)
-                    })()}
-                    <button className="icon" title="More" onClick={(e)=>{ e.stopPropagation(); setLayerMenuId(id => id===layer.id ? null : layer.id) }}>
-                      <Icon path={mdiDotsVertical}/>
-                    </button>
-                    {layerMenuId === layer.id && (
-                      <div className="absolute right-2 top-full mt-2 z-30 bg-zinc-800 border border-white/10 rounded-md shadow-soft min-w-[160px]"
-                        onClick={(e)=>e.stopPropagation()}>
-                        <div className="px-2 py-1 hover:bg-white/10 cursor-pointer flex items-center gap-2" onClick={()=>{ downloadLayerSvg(layer.id); setLayerMenuId(null) }}>
-                          <Icon path={mdiContentSave}/> <span>Save SVG</span>
-                        </div>
-                        <div className="px-2 py-1 hover:bg-white/10 cursor-pointer flex items-center gap-2" onClick={()=>{ moveLayer(layer.id,-1); setLayerMenuId(null) }}>
-                          <Icon path={mdiArrowUp}/> <span>Move Up</span>
-                        </div>
-                        <div className="px-2 py-1 hover:bg-white/10 cursor-pointer flex items-center gap-2" onClick={()=>{ moveLayer(layer.id,1); setLayerMenuId(null) }}>
-                          <Icon path={mdiArrowDown}/> <span>Move Down</span>
-                        </div>
-                        <div className="px-2 py-1 hover:bg-white/10 cursor-pointer flex items-center gap-2" onClick={()=>{ fitToLayer(layer.id); setLayerMenuId(null) }}>
-                          <Icon path={mdiCrosshairsGps}/> <span>Zoom to Layer</span>
-                        </div>
-                        <div className="px-2 py-1 hover:bg-white/10 cursor-pointer flex items-center gap-2 text-red-300" onClick={()=>{ removeLayer(layer.id); setLayerMenuId(null) }}>
-                          <Icon path={mdiDelete}/> <span>Delete</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </header>
-                {!layer.uiCollapsed && (
-                  <div className={`p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${compactUI ? 'gap-1' : 'gap-2'} text-sm`}>
-                  {compactUI && (
-                    <label className={labelClass}>
-                      Generator
-                      <Select value={layer.generator} onChange={v=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,generator:v,params:{...GENERATORS[v].params}}:l))}
-                        options={Object.entries(GENERATORS).map(([k,v])=>({ label: v.name, value: k }))}
-                        tooltip="Change this layer's generator. Switching resets its parameters to sensible defaults."
-                      />
-                    </label>
-                  )}
-                  {/* Grouped controls for MDI Icon Field */}
-                  {layer.generator === 'mdiIconField' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">MDI Icon Field</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'mdiIconField')}>{isGroupOpen(layer.id,'mdiIconField')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'mdiIconField') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          <label className={labelClass}>Icons (CSV)
-                            <input className="input" type="text" placeholder="mdiFlower,mdiRobot"
-                              value={(numEdit[`L:${layer.id}:namesCsv`] ?? (layer.params.namesCsv ?? ''))}
-                              onChange={e=>{
-                                const txt = e.target.value
-                                setNumEdit(m=>({ ...m, [`L:${layer.id}:namesCsv`]: txt }))
-                              }}
-                              onBlur={e=>{
-                                const txt = e.target.value
-                                setNumEdit(m=>{ const n={...m}; delete n[`L:${layer.id}:namesCsv`]; return n })
-                                setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,namesCsv: txt}}:l))
-                              }}
-                            />
-                          </label>
-                          <div className="flex items-end">
-                            <button className="btn" onClick={()=>{
-                              setNumEdit(m=>{ const n={...m}; delete n[`L:${layer.id}:namesCsv`]; return n })
-                              setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,namesCsv: ''}}:l))
-                            }}>
-                              <Icon path={mdiEraser}/> {compactUI ? 'Clear' : 'Clear list'}
-                            </button>
-                          </div>
-                          {renderNumParam(layer,'rows','Rows')}
-                          {renderNumParam(layer,'cols','Cols')}
-                          {renderNumParam(layer,'spacing','Spacing')}
-                          {renderNumParam(layer,'jitter','Jitter')}
-                          {renderNumParam(layer,'scaleMin','ScaleMin')}
-                          {renderNumParam(layer,'scaleMax','ScaleMax')}
-                          {renderNumParam(layer,'rotationJitter','RotationJitter')}
-                          {renderNumParam(layer,'samples','Samples')}
-                          {renderNumParam(layer,'margin','Margin')}
-                          {renderNumParam(layer,'simplifyTol','SimplifyTol')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Hatch Fill */}
-                  {layer.generator === 'hatchFill' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Hatch Fill</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'hatchFill')}>{isGroupOpen(layer.id,'hatchFill')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'hatchFill') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'angleDeg','AngleDeg')}
-                          {renderNumParam(layer,'spacing','Spacing')}
-                          {renderNumParam(layer,'offset','Offset')}
-                          {renderNumParam(layer,'crossOffset','CrossOffset')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Halftone core sampling */}
-                  {layer.generator === 'halftone' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Halftone · Core</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'halftoneCore')}>{isGroupOpen(layer.id,'halftoneCore')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'halftoneCore') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'angleDeg','AngleDeg')}
-                          {renderNumParam(layer,'spacing','Spacing')}
-                          {renderNumParam(layer,'segment','Segment')}
-                          {renderNumParam(layer,'gamma','Gamma')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Halftone dots & radial options */}
-                  {layer.generator === 'halftone' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Halftone · Dots / Radial</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'halftoneDots')}>{isGroupOpen(layer.id,'halftoneDots')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'halftoneDots') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'dotMin','DotMin')}
-                          {renderNumParam(layer,'dotMax','DotMax')}
-                          {renderNumParam(layer,'dotAspect','DotAspect')}
-                          {renderNumParam(layer,'radialCenterX','RadialCenterX')}
-                          {renderNumParam(layer,'radialCenterY','RadialCenterY')}
-                          {renderNumParam(layer,'angStepDeg','AngStepDeg')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Halftone squiggle */}
-                  {layer.generator === 'halftone' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Halftone · Squiggle</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'halftoneSquiggle')}>{isGroupOpen(layer.id,'halftoneSquiggle')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'halftoneSquiggle') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'squiggleAmp','SquiggleAmp')}
-                          {renderNumParam(layer,'squigglePeriod','SquigglePeriod')}
-                          {renderNumParam(layer,'squiggleJitterAmp','JitterAmp')}
-                          {renderNumParam(layer,'squiggleJitterScale','JitterScale')}
-                          {renderNumParam(layer,'squigglePhaseJitter','PhaseJitter')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for MDI Pattern */}
-                  {layer.generator === 'mdiPattern' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">MDI Pattern</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'mdiPattern')}>{isGroupOpen(layer.id,'mdiPattern')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'mdiPattern') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'cols','Cols')}
-                          {renderNumParam(layer,'rows','Rows')}
-                          {renderNumParam(layer,'spacing','Spacing')}
-                          {renderNumParam(layer,'scale','Scale')}
-                          {renderNumParam(layer,'rotation','Rotation')}
-                          {renderNumParam(layer,'jitter','Jitter')}
-                          {renderNumParam(layer,'samples','Samples')}
-                          {renderNumParam(layer,'margin','Margin')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Pixel Mosaic */}
-                  {layer.generator === 'pixelMosaic' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Pixel Mosaic</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'pixelMosaic')}>{isGroupOpen(layer.id,'pixelMosaic')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'pixelMosaic') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'cols','Cols')}
-                          {renderNumParam(layer,'rows','Rows')}
-                          {renderNumParam(layer,'density','Density')}
-                          {renderNumParam(layer,'jitter','Jitter')}
-                          {renderNumParam(layer,'levels','Levels')}
-                          {renderNumParam(layer,'margin','Margin')}
-                          {renderNumParam(layer,'simplifyTol','SimplifyTol')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for SVG Import transform */}
-                  {layer.generator === 'svgImport' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">SVG Import · Transform</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'svgTransform')}>{isGroupOpen(layer.id,'svgTransform')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'svgTransform') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'scale','Scale')}
-                          {renderNumParam(layer,'rotateDeg','RotateDeg')}
-                          {renderNumParam(layer,'offsetX','OffsetX')}
-                          {renderNumParam(layer,'offsetY','OffsetY')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for L-system */}
-                  {layer.generator === 'lsystem' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">L-system</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'lsys')}>{isGroupOpen(layer.id,'lsys')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'lsys') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          <label className={labelClass}>Preset
-                            <Select value={layer.params.preset || 'koch'}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, preset:v}}:l))}
-                              options={[{label:'Koch snowflake',value:'koch'},{label:'Dragon',value:'dragon'},{label:'Plant',value:'plant'}]}
-                            />
-                          </label>
-                          {renderNumParam(layer,'iterations','Iterations')}
-                          {renderNumParam(layer,'angleDeg','AngleDeg')}
-                          {renderNumParam(layer,'step','Step')}
-                          {renderNumParam(layer,'jitter','Jitter')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Truchet */}
-                  {layer.generator === 'truchet' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Truchet Tiles</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'truchet')}>{isGroupOpen(layer.id,'truchet')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'truchet') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'cols','Cols')}
-                          {renderNumParam(layer,'rows','Rows')}
-                          <label className={labelClass}>Variant
-                            <Select value={layer.params.variant || 'curves'}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, variant:v}}:l))}
-                              options={[{label:'Curves (quarter-circles)',value:'curves'},{label:'Lines (diagonals)',value:'lines'}]}
-                            />
-                          </label>
-                          {renderNumParam(layer,'jitter','Jitter')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Phyllotaxis */}
-                  {layer.generator === 'phyllotaxis' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Phyllotaxis</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'phyl')}>{isGroupOpen(layer.id,'phyl')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'phyl') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {renderNumParam(layer,'count','Count')}
-                          {renderNumParam(layer,'spacing','Spacing')}
-                          {renderNumParam(layer,'angleDeg','AngleDeg')}
-                          {renderNumParam(layer,'jitter','Jitter')}
-                          <label className={labelRowClass}>
-                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.connect}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, connect:e.target.checked}}:l))} />
-                            Connect seeds (single path)
-                          </label>
-                          {renderNumParam(layer,'dotSize','DotSize')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Path Warp (links to another layer) */}
-                  {layer.generator === 'pathWarp' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Path Warp (link to source layer)</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'warp')}>{isGroupOpen(layer.id,'warp')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'warp') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          <label className={labelClass}>Source Layer
-                            <Select value={layer.params.srcLayerId || ''}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcLayerId:v, srcToPrevious:false}}:l))}
-                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
-                            />
-                          </label>
-                          <label className={labelRowClass}>
-                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.srcToPrevious} disabled={!!layer.params.srcLayerId}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcToPrevious:e.target.checked}}:l))} />
-                            Or: use previous visible layer
-                          </label>
-                          {renderNumParam(layer,'amp','Amplitude')}
-                          {renderNumParam(layer,'scale','NoiseScale')}
-                          {renderNumParam(layer,'step','ResampleStep')}
-                          {renderNumParam(layer,'copies','Copies')}
-                          <label className={labelRowClass}>
-                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.rotateFlow}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, rotateFlow:e.target.checked}}:l))} />
-                            Use vector field (ignore tangent)
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Grouped controls for Image-based generators: Halftone, Pixel Mosaic, Image Contours, Poisson Stipple, TSP Art */}
-                  {(['halftone','pixelMosaic','imageContours','poissonStipple','tspArt'].includes(layer.generator)) && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Image Source</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'img')}>{isGroupOpen(layer.id,'img')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'img') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          <div className="flex items-center gap-2">
-                            <button className="btn" onClick={()=>openImageForLayer(layer.id)}>Load Image</button>
-                            <button className="btn" disabled={!bitmaps[layer.id]} onClick={()=>clearLayerImage(layer.id)}>Clear</button>
-                          </div>
-                          <div className="text-xs opacity-70 col-span-2">
-                            {layer.params?.imageInfo ? `Loaded: ${layer.params.imageInfo}` : 'No image loaded'}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {layer.generator === 'combinator' && (
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Combinator Sources</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'comb')}>{isGroupOpen(layer.id,'comb')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'comb') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          <label className={labelClass}>Source A
-                            <Select value={layer.params.srcA || ''}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcA:v}}:l))}
-                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
-                            />
-                          </label>
-                          <label className={labelClass}>Source B
-                            <Select value={layer.params.srcB || ''}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, srcB:v}}:l))}
-                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
-                            />
-                          </label>
-                          <label className={labelClass}>Operation
-                            <Select value={layer.params.op || 'intersect'}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, op:v}}:l))}
-                              options={[
-                                { label:'Intersect', value:'intersect' },
-                                { label:'Union', value:'union' },
-                                { label:'Difference (A - B)', value:'difference' },
-                                { label:'XOR', value:'xor' }
-                              ]}
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {Object.entries(GENERATORS[layer.generator].params).map(([k,def]) => {
-                    // Skip clip UI keys we render via custom block for these generators
-                    if ((layer.generator === 'hatchFill' || layer.generator === 'halftone' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport') && (
-                      k === 'clipToPrevious' || k === 'clipLayerId' || k === 'clipMode' || k === 'clipIndex' || k === 'clipRule'
-                    )) return null
-                    // Skip keys we render in grouped blocks
-                    if (layer.generator === 'mdiIconField' && (
-                      ['namesCsv','rows','cols','spacing','jitter','scaleMin','scaleMax','rotationJitter','samples','margin','simplifyTol'].includes(k)
-                    )) return null
-                    if (layer.generator === 'hatchFill' && (
-                      ['angleDeg','spacing','offset','crossOffset'].includes(k)
-                    )) return null
-                    if (layer.generator === 'halftone' && (
-                      ['angleDeg','spacing','segment','gamma','dotMin','dotMax','dotAspect','radialCenterX','radialCenterY','angStepDeg','squiggleAmp','squigglePeriod','squiggleJitterAmp','squiggleJitterScale','squigglePhaseJitter'].includes(k)
-                    )) return null
-                    if (layer.generator === 'svgImport' && (
-                      ['scale','rotateDeg','offsetX','offsetY'].includes(k)
-                    )) return null
-                    if (layer.generator === 'lsystem' && (
-                      ['preset'].includes(k)
-                    )) return null
-                    if (layer.generator === 'truchet' && (
-                      ['variant','cols','rows','jitter'].includes(k)
-                    )) return null
-                    if (layer.generator === 'phyllotaxis' && (
-                      ['connect','count','spacing','angleDeg','jitter','dotSize'].includes(k)
-                    )) return null
-                    if (layer.generator === 'pathWarp' && (
-                      ['srcLayerId','srcToPrevious','amp','scale','step','copies','rotateFlow'].includes(k)
-                    )) return null
-                    if (k === 'imageInfo') return null
-                    if (layer.generator === 'mdiPattern' && (
-                      ['cols','rows','spacing','scale','rotation','jitter','samples','margin'].includes(k)
-                    )) return null
-                    if (layer.generator === 'pixelMosaic' && (
-                      ['cols','rows','density','jitter','levels','margin','simplifyTol'].includes(k)
-                    )) return null
-                    if (layer.generator === 'combinator' && (
-                      ['srcA','srcB','op'].includes(k)
-                    )) return null
-                    // Boolean controls
-                    if (typeof def === 'boolean') {
-                      // Avoid duplicate 'Clip To Previous' control: we render a custom section below
-                      if ((layer.generator === 'hatchFill' || layer.generator === 'halftone') && k === 'clipToPrevious') return null
-                      return (
-                        <label key={k} className={labelRowClass}>
-                          <input type="checkbox" className="w-4 h-4" checked={!!layer.params[k]}
-                            onChange={e=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,[k]:e.target.checked}}:l))} />
-                          {k.replace(/([A-Z])/g,' $1')}
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'pixelMosaic' && k === 'style') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Style
-                          <Select value={layer.params.style}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,style:v}}:l))}
-                            options={[
-                              { label: 'Squares', value: 'squares' },
-                              { label: 'Cross', value: 'cross' },
-                              { label: 'Plus', value: 'plus' },
-                              { label: 'Random', value: 'random' }
-                            ]}
-                          />
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'halftone' && k === 'shape') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Shape
-                          <Select value={layer.params.shape}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,shape:v}}:l))}
-                            options={[
-                              {label:'Lines (scanline dither)', value:'lines'},
-                              {label:'Dots – Circle', value:'circle'},
-                              {label:'Dots – Ellipse', value:'ellipse'},
-                              {label:'Dots – Square', value:'square'},
-                              {label:'Rings (radial)', value:'rings'},
-                              {label:'Radial Dots (rings)', value:'radialDots'}
-                            ]}
-                          />
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'halftone' && k === 'method') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Method
-                          <Select value={layer.params.method}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,method:v}}:l))}
-                            options={[
-                              {label:'Bayer 8x8',value:'bayer'},
-                              {label:'Threshold 0.5',value:'threshold'},
-                              {label:'Floyd–Steinberg',value:'floyd'}
-                            ]}
-                          />
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'halftone' && k === 'squiggleMode') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Squiggle Mode
-                          <Select value={layer.params.squiggleMode}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,squiggleMode:v}}:l))}
-                            options={[
-                              {label:'Sine', value:'sine'},
-                              {label:'Zigzag', value:'zigzag'}
-                            ]}
-                          />
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'mdiPattern' && k === 'iconIndex') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Icon
-                          <Select value={layer.params.iconIndex}
-                            onChange={(idx)=>{
-                              const name = mdiIconOptions[idx]?.name || layer.params.iconName
-                              setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,iconIndex:idx,iconName:name}}:l))
-                            }}
-                            options={mdiIconOptions.map(o=>({label:o.label,value:o.value}))}
-                          />
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'mdiPattern' && k === 'iconName') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Icon Name (e.g. "mdi:robot" or "robot")
-                          <input className="input" value={layer.params.iconName}
-                            onChange={e=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,iconName:e.target.value}}:l))}/>
-                        </label>
-                      )
-                    }
-                    if (layer.generator === 'stripeBands' && k === 'tubeCurve') {
-                      return (
-                        <label key={k} className={labelClass}>
-                          Tube Curve
-                          <Select value={layer.params.tubeCurve || 'tri'}
-                            onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,tubeCurve:v}}:l))}
-                            options={[{label:'Triangular', value:'tri'},{label:'Sine', value:'sin'}]}
-                          />
-                        </label>
-                      )
-                    }
-                    // Numeric input with ephemeral editing buffer so backspace can clear fully
-                    const editKey = `L:${layer.id}:${k}`
-                    const displayVal = (numEdit && Object.prototype.hasOwnProperty.call(numEdit, editKey))
-                      ? numEdit[editKey]
-                      : String(layer.params[k] ?? def)
-                    return (
-                      <label key={k} className={labelClass}>
-                        {k}
-                        <input className="input" type="text" inputMode="decimal" value={displayVal}
-                          onChange={e=>{
-                            const txt = e.target.value
-                            setNumEdit(m=>({ ...m, [editKey]: txt }))
-                            const v = parseFloat(txt)
-                            if (txt !== '' && Number.isFinite(v)) {
-                              setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,[k]: v}}:l))
-                            }
-                          }}
-                          onBlur={()=>{
-                            setNumEdit(m=>{ const n={...m}; delete n[editKey]; return n })
-                          }}
-                        />
-                      </label>
-                    )
-                  })}
-                  {(
-                    <div className="col-span-2 lg:col-span-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs opacity-80">Pattern Fill</span>
-                        <button className="icon" onClick={()=>toggleGroup(layer.id,'fill')}>{isGroupOpen(layer.id,'fill')?'–':'+'}</button>
-                      </div>
-                      {isGroupOpen(layer.id,'fill') && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          <label className={labelRowClass}>
-                            <input type="checkbox" className="w-4 h-4" checked={layer.params.clipEnabled !== false}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l, params:{...l.params, clipEnabled: e.target.checked}}:l))} />
-                            Enable Fill
-                          </label>
-                          <label className={labelClass}>Fill From Layer
-                            <Select value={layer.params.clipLayerId || ''}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>{
-                                if (l.id!==layer.id) return l
-                                return { ...l, params: { ...l.params, clipLayerId: v, clipToPrevious: false } }
-                              }))}
-                              options={[{label:'(None)', value:''}, ...layers.filter(l=>l.id!==layer.id).map(l=>({label:l.name, value:l.id}))]}
-                            />
-                          </label>
-                          <label className={labelRowClass}>
-                            <input type="checkbox" className="w-4 h-4" checked={!!layer.params.clipToPrevious}
-                              disabled={!!layer.params.clipLayerId}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipToPrevious:e.target.checked}}:l))} />
-                            Or: Use previous visible layer
-                          </label>
-                          <label className={labelClass}>Clip Mode
-                            <Select value={layer.params.clipMode || 'all'}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipMode:v}}:l))}
-                              options={[{label:'All polygons',value:'all'},{label:'Largest polygon',value:'largest'},{label:'# Index',value:'index'}]}
-                            />
-                          </label>
-                          <label className={labelClass}>Clip Index
-                            <input className="input" type="number" min="0" step="1" value={layer.params.clipIndex || 0}
-                              onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipIndex:Math.max(0,Math.floor(+e.target.value||0))}}:l))} />
-                          </label>
-                          <label className={labelClass}>Clip Rule
-                            <Select value={layer.params.clipRule || 'union'}
-                              onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipRule:v}}:l))}
-                              options={
-                                (layer.generator==='halftone')
-                                  ? [
-                                      {label:'Union (default)', value:'union'}
-                                    ]
-                                  : [
-                                      {label:'Union (default)', value:'union'},
-                                      {label:'Even-Odd', value:'evenodd'},
-                                      ...((layer.generator==='hatchFill'||layer.generator==='mdiPattern'||layer.generator==='svgImport')
-                                        ? [
-                                            {label:'Intersect', value:'intersect'},
-                                            {label:'Difference (first - others)', value:'difference'}
-                                          ] : [])
-                                    ]
-                              }
-                            />
-                          </label>
-                          <div className="col-span-2 flex gap-2">
-                            <button className="btn" onClick={()=>setPicker(p => (p.active && p.targetLayerId === layer.id) ? { active: false, targetLayerId: null } : { active: true, targetLayerId: layer.id })}>
-                              {picker.active && picker.targetLayerId === layer.id
-                                ? (compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Picking</>))
-                                : (compactUI ? (<><Icon path={mdiVectorSelection}/> Pick</>) : (<><Icon path={mdiVectorSelection}/> Pick shape on canvas</>))}
-                            </button>
-                            {layer.generator === 'svgImport' && (
-                              <>
-                                {!transform.active || transform.layerId !== layer.id ? (
-                                  <button className="btn" onClick={()=>setTransform({ active: true, layerId: layer.id })}>
-                                    {compactUI ? (<><Icon path={mdiVectorSquare}/> Transform</>) : (<><Icon path={mdiVectorSquare}/> Transform on canvas</>)}
-                                  </button>
-                                ) : (
-                                  <button className="btn" onClick={()=>setTransform({ active: false, layerId: null })}>
-                                    {compactUI ? (<><Icon path={mdiCheck}/> Done</>) : (<><Icon path={mdiCheck}/> Done Transform</>)}
-                                  </button>
-                                )}
-                              </>
-                            )}
-                            {picker.active && picker.targetLayerId === layer.id && (
-                              <span className="text-xs opacity-80 self-center">Click inside a shape to set Clip Layer + Index</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {(layer.params.clipMode || 'all') === 'index' && (
-                    <div className="col-span-2 lg:col-span-3 grid grid-cols-1 gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs opacity-80">Selected:</span>
-                        {(() => {
-                          const sel = Array.isArray(layer.params.clipIndices)
-                            ? layer.params.clipIndices
-                            : (Number.isFinite(layer.params.clipIndex) ? [Math.max(0, Math.floor(layer.params.clipIndex))] : [])
-                          return sel.length ? sel.map((idx, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-xs">
-                              #{idx}
-                              <button className="icon" title="Remove" onClick={()=>setLayers(ls=>ls.map(l=>{
-                                if (l.id!==layer.id) return l
-                                const arr = sel.filter(v=>v!==idx)
-                                return { ...l, params: { ...l.params, clipIndices: arr } }
-                              }))}><Icon path={mdiClose}/></button>
-                            </span>
-                          )) : (<span className="text-xs opacity-60">(none)</span>)
-                        })()}
-                        <button className="btn" onClick={()=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,clipIndices:[]}}:l))}>
-                          <Icon path={mdiEraser}/> {compactUI ? 'Clear' : 'Clear indices'}
-                        </button>
-                      </div>
-                      <label className={labelClass}>Clip Indices (CSV)
-                        <input className="input" type="text" value={(numEdit[`L:${layer.id}:clipCsv`] ?? (
-                            Array.isArray(layer.params.clipIndices)
-                              ? layer.params.clipIndices.join(',')
-                              : (Number.isFinite(layer.params.clipIndex) ? String(layer.params.clipIndex) : '')
-                          ))}
-                          onChange={(e)=>{
-                            const txt = e.target.value
-                            setNumEdit(m=>({ ...m, [`L:${layer.id}:clipCsv`]: txt }))
-                            const parts = String(txt).split(/[;\,\s]+/).filter(Boolean)
-                            const arr = Array.from(new Set(parts.map(t=>Math.max(0, Math.floor(+t||0))).filter(n=>Number.isFinite(n))))
-                            setLayers(ls=>ls.map(l=>{
-                              if (l.id!==layer.id) return l
-                              const nextParams = { ...l.params, clipIndices: arr }
-                              delete nextParams.clipIndex
-                              return { ...l, params: nextParams }
-                            }))
-                          }}
-                          onBlur={()=>setNumEdit(m=>{ const n={...m}; delete n[`L:${layer.id}:clipCsv`]; return n })}
-                        />
-                      </label>
-                    </div>
-                  )}
-                  {layer.generator === 'isoContours' && (
-                    <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <label className="flex flex-col gap-1">Preset
-                        <Select value={layer.params.presetName || ''}
-                          onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params, ...isoPresetValues(v), presetName: v}}:l))}
-                          options={[
-                            {label:'(None)', value:''},
-                            {label:'Hourglass', value:'hourglass'},
-                            {label:'Lens', value:'lens'},
-                            {label:'Bulb', value:'bulb'},
-                            {label:'Triple', value:'triple'},
-                          ]}
-                        />
-                      </label>
-                      <div className="flex items-end gap-2">
-                        <button className="btn" onClick={()=>fitIsoSeparation(layer.id)}><Icon path={mdiFitToPageOutline}/> {compactUI ? 'Fit Sep' : 'Fit Separation'}</button>
-                      </div>
-                    </div>
-                  )}
-                  {layer.generator === 'quasicrystalContours' && (
-                    <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <label className="flex flex-col gap-1">Preset
-                        <Select value={layer.params.presetName || ''}
-                          onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params, ...qcPresetValues(v), presetName: v}}:l))}
-                          options={[
-                            {label:'(None)', value:''},
-                            {label:'Star (7)', value:'star-7'},
-                            {label:'Bloom (9)', value:'bloom-9'},
-                            {label:'Flower (5)', value:'flower-5'},
-                          ]}
-                        />
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" className="w-4 h-4" checked={!!layer.params.animatePhase}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,animatePhase:e.target.checked}}:l))}/>
-                        Animate Phase
-                      </label>
-                      <label className="flex flex-col gap-1">Phase Speed
-                        <input className="input" type="range" min="-4" max="4" step="0.05" value={layer.params.phaseSpeed ?? 1}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,phaseSpeed:+e.target.value}}:l))} />
-                      </label>
-                    </div>
-                  )}
-                  {layer.generator === 'superformulaRings' && (
-                    <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <label className="flex flex-col gap-1">Preset
-                        <Select value={layer.params.presetName || ''}
-                          onChange={(v)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params, ...superPresetValues(v), presetName: v}}:l))}
-                          options={[
-                            {label:'(None)', value:''},
-                            {label:'Star', value:'star'},
-                            {label:'Gear', value:'gear'},
-                            {label:'Petal', value:'petal'},
-                            {label:'Bloom', value:'bloom'},
-                            {label:'Spiky', value:'spiky'},
-                          ]}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1">Morph
-                        <input className="input" type="range" min="0" max="1" step="0.01" value={layer.params.morph ?? 0}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,morph:+e.target.value}}:l))} />
-                      </label>
-                      <label className="flex flex-col gap-1">Twist (deg/ring)
-                        <input className="input" type="range" min="-45" max="45" step="1" value={layer.params.twistDeg ?? 0}
-                          onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,twistDeg:+e.target.value}}:l))} />
-                      </label>
-                      <div className="col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" className="w-4 h-4" checked={!!layer.params.n23Lock}
-                            onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,n23Lock:e.target.checked}}:l))} />
-                          Lock n2 = n3
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" className="w-4 h-4" checked={layer.params.mRound ?? true}
-                            onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,mRound:e.target.checked}}:l))} />
-                          Round m
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" className="w-4 h-4" checked={!!layer.params.mEven}
-                            onChange={(e)=>setLayers(ls=>ls.map(l=>l.id===layer.id?{...l,params:{...l.params,mEven:e.target.checked}}:l))} />
-                          Force even m
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          </>
-        )}
+  <LayersPanel
+    compactUI={compactUI}
+    layers={layers}
+    GENERATORS={GENERATORS}
+    COLOR_OPTIONS={COLOR_OPTIONS}
+    labelClass={labelClass}
+    labelRowClass={labelRowClass}
+    layerMenuId={layerMenuId}
+    bitmaps={bitmaps}
+    toggleVisible={toggleVisible}
+    addLayer={addLayer}
+    removeLayer={removeLayer}
+    moveLayer={moveLayer}
+    setAllLayersCollapsed={setAllLayersCollapsed}
+    setLayers={setLayers}
+    fitToLayer={fitToLayer}
+    openImageForLayer={openImageForLayer}
+    clearLayerImage={clearLayerImage}
+    renderNumParam={renderNumParam}
+    isGroupOpen={isGroupOpen}
+    toggleGroup={toggleGroup}
+    downloadLayerSvg={downloadLayerSvg}
+    setLayerMenuId={setLayerMenuId}
+    isoPresetValues={isoPresetValues}
+    qcPresetValues={qcPresetValues}
+    superPresetValues={superPresetValues}
+    fitIsoSeparation={fitIsoSeparation}
+    picker={picker}
+    setPicker={setPicker}
+    transform={transform}
+    setTransform={setTransform}
+    numEdit={numEdit}
+    setNumEdit={setNumEdit}
+  />
+)}
       </aside>
 
       <main className="p-4 h-screen overflow-hidden flex flex-col" style={{ background: doc.appBg }}>
@@ -2974,11 +1929,50 @@ export default function App() {
           style={{ backgroundColor: doc.appBg, backgroundSize: doc.showGrid ? `${doc.gridSizePx || 12}px ${doc.gridSizePx || 12}px` : undefined, '--grid-color': gridDotColor }}
           onWheel={onWheelPreview} onWheelCapture={onWheelPreview}>
           <div className="absolute top-2 right-2 z-10 bg-black/50 backdrop-blur rounded-md px-2 py-1 flex items-center gap-2">
-            <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.max(0.2, (d.previewZoom||1)*0.9)}))}>-</button>
-            <input type="range" min="0.2" max="8" step="0.05" value={doc.previewZoom||1} onChange={e=>setDoc(d=>({...d, previewZoom: +e.target.value}))}/>
-            <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.min(8, (d.previewZoom||1)*1.1)}))}>+</button>
+            <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.max(0.2, (d.previewZoom||1)*0.9), previewAutoFit: false}))}>-</button>
+            <input type="range" min="0.2" max="8" step="0.05" value={doc.previewZoom||1} onChange={e=>setDoc(d=>({...d, previewZoom: +e.target.value, previewAutoFit: false}))}/>
+            <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.min(8, (d.previewZoom||1)*1.1), previewAutoFit: false}))}>+</button>
+            <button className="btn" onClick={()=>{ setDoc(d=>({...d, previewZoom: 1, previewPanX: 0, previewPanY: 0, previewAutoFit: false })); showToast('View reset') }} title="Reset view">
+              <Icon path={mdiRefresh}/> {compactUI? null : 'Reset'}
+            </button>
             <button className="btn" onClick={()=>fitPreview(true)} title="Fit to page"><Icon path={mdiFitToPageOutline}/> {compactUI? null : 'Fit'}</button>
             <button className="btn" onClick={fitToContent} title="Fit to content"><Icon path={mdiSelectAll}/> {compactUI? null : 'Content'}</button>
+            <select
+              className="input text-xs py-1 px-2"
+              value={viewPresetSel}
+              onChange={e=>{
+                const v = e.target.value
+                setViewPresetSel(v)
+                if (v === 'one') {
+                  setDoc(d=>({ ...d, previewZoom: 1, previewPanX: 0, previewPanY: 0, previewAutoFit: false }));
+                  showToast('1:1 view')
+                } else if (v === 'fit') {
+                  fitPreview(true)
+                } else if (v === 'content') {
+                  fitToContent()
+                } else if (v === 'saveA') {
+                  saveView('a')
+                } else if (v === 'loadA') {
+                  loadView('a')
+                } else if (v === 'saveB') {
+                  saveView('b')
+                } else if (v === 'loadB') {
+                  loadView('b')
+                }
+                // Reset selection back to placeholder
+                setTimeout(()=>setViewPresetSel(''), 0)
+              }}
+              title="View presets and slots"
+            >
+              <option value="">Presets</option>
+              <option value="one">1:1</option>
+              <option value="fit">Fit Page</option>
+              <option value="content">Fit Content</option>
+              <option value="saveA">Save A</option>
+              <option value="loadA">Load A</option>
+              <option value="saveB">Save B</option>
+              <option value="loadB">Load B</option>
+            </select>
             <label className="flex items-center gap-1 text-xs opacity-80">
               <input type="checkbox" checked={!!doc.previewAutoFit} onChange={e=>setDoc(d=>({...d, previewAutoFit: e.target.checked}))} />
               Auto

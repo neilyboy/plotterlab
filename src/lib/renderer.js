@@ -6,6 +6,21 @@ import { getGenerators } from './generators/registry.js'
 
 // Generators are provided by the central registry (see ./generators/registry.js)
 
+// Decimate polyline point counts for preview performance
+function decimatePolyline(poly, step = 2) {
+  const n = Array.isArray(poly) ? poly.length : 0
+  if (n <= 2 || step <= 1) return poly
+  const out = []
+  for (let i = 0; i < n; i += step) out.push(poly[i])
+  // Ensure we keep the last point to close gaps visually
+  if (out[out.length - 1] !== poly[n - 1]) out.push(poly[n - 1])
+  return out
+}
+function decimatePolylines(polys, step = 2) {
+  if (!Array.isArray(polys) || step <= 1) return polys
+  return polys.map(p => decimatePolyline(p, step))
+}
+
 // Geometry helpers for global clipping
 function pointInPolygon(p, poly) {
   let inside = false
@@ -234,6 +249,25 @@ function scaleParamsForPreview(genKey, params, q) {
       out[name] = v
     }
   }
+  // Extra guards for very heavy iterators during preview
+  if (genKey === 'clifford') {
+    // Cap iterations based on quality, and scale burn-in lightly
+    if (typeof out.iter === 'number' && Number.isFinite(out.iter)) {
+      const cap = Math.max(3000, Math.floor(12000 * q))
+      const scaled = Math.floor(out.iter * Math.max(0.3, q))
+      out.iter = Math.min(scaled, cap)
+    }
+    if (typeof out.burn === 'number' && Number.isFinite(out.burn)) {
+      out.burn = Math.max(100, Math.floor(out.burn * Math.max(0.4, q)))
+    }
+  }
+  if (genKey === 'deJong') {
+    if (typeof out.iter === 'number' && Number.isFinite(out.iter)) {
+      const cap = Math.max(3000, Math.floor(10000 * q))
+      const scaled = Math.floor(out.iter * Math.max(0.3, q))
+      out.iter = Math.min(scaled, cap)
+    }
+  }
   if (genKey === 'hatchFill' && typeof out.spacing === 'number') {
     out.spacing = Math.max(0.1, out.spacing / Math.max(0.5, q))
   }
@@ -267,8 +301,13 @@ function scaleParamsForPreview(genKey, params, q) {
 export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, quality = 1, progressCb) {
   const REGISTRY = getGenerators()
   // Some generators already constrain to page/margin rect; skip global clip for them to avoid
-  // exploding segment counts (e.g., halftone scanlines sampled at small steps).
-  const skipGlobalClip = (genKey) => genKey === 'halftone'
+  // exploding segment counts (e.g., halftone scanlines sampled at small steps). Also, during preview,
+  // skip global clipping for heavy iterative generators to keep interaction snappy.
+  const skipGlobalClip = (genKey) => {
+    if (genKey === 'halftone') return true
+    if ((quality < 0.999 || docArg.fastPreview) && (genKey === 'clifford' || genKey === 'deJong')) return true
+    return false
+  }
   const outputs = []
   const getLayerPolysById = (lid) => {
     if (!lid) return []
@@ -298,6 +337,12 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
       const p2 = quality < 0.999 ? scaleParamsForPreview(tgt.generator, base2, quality) : base2
       const effMargin2 = (p2 && Number.isFinite(p2.margin)) ? p2.margin : docArg.margin
       let poly2 = gen2.fn({ ...p2, width: docArg.width, height: docArg.height, margin: effMargin2, seed: docArg.seed })
+      // Preview-time decimation for very dense iterative generators
+      if ((quality < 0.999 || docArg.fastPreview) && (tgt.generator === 'clifford' || tgt.generator === 'deJong')) {
+        const q = Math.max(0.3, Math.min(1, quality))
+        const step = Math.max(3, Math.ceil(6 / q))
+        poly2 = decimatePolylines(poly2, step)
+      }
       // Apply same global clipping as main pipeline (unless gen already respects bounds)
       if (docArg.clipOutput && docArg.clipOutput !== 'none' && !skipGlobalClip(tgt.generator)) {
         const useMargin = docArg.clipOutput === 'margin'
@@ -407,6 +452,12 @@ export function computeRendered(layersArg, docArg, mdiCacheArg, bitmapsArg, qual
         progressCb && progressCb({ pct: Math.min(1, (idx + frac) / Math.max(1,total)), idx: idx + frac, total, layerName: layer?.name || '', layerId: layer?.id })
       }
       let poly = gen.fn({ ...p, width: docArg.width, height: docArg.height, margin: effMargin, seed: docArg.seed, onProgress })
+      // Preview-time decimation for very dense iterative generators
+      if ((quality < 0.999 || docArg.fastPreview) && (layer.generator === 'clifford' || layer.generator === 'deJong')) {
+        const q = Math.max(0.3, Math.min(1, quality))
+        const step = Math.max(3, Math.ceil(6 / q))
+        poly = decimatePolylines(poly, step)
+      }
       // Generic polygon clip for generators that don't natively clip
       if (layer.params && (layer.params.clipLayerId || layer.params.clipToPrevious) && (layer.params.clipEnabled !== false) && !(layer.generator === 'hatchFill' || layer.generator === 'mdiPattern' || layer.generator === 'svgImport' || layer.generator === 'halftone')) {
         let closed = []

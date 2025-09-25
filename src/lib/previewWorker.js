@@ -9,7 +9,11 @@ import { applyPathPlanning } from './pipeline/decorators.js'
 self.onmessage = async (e) => {
   const { id, layers, doc, mdiCache, bitmaps, quality, optimizeJoin } = e.data || {}
   try {
-    const outputs = computeRendered(layers || [], doc || {}, mdiCache || {}, bitmaps || {}, quality || 1, (p) => {
+    const q = Number.isFinite(quality) ? quality : 1
+    const isPreview = (q < 0.999) || (doc && doc.fastPreview)
+    // For preview responsiveness, disable ordering/joining in renderer consumers
+    const docForPreview = isPreview ? { ...(doc || {}), optimize: 'none' } : (doc || {})
+    const outputs = computeRendered(layers || [], docForPreview, mdiCache || {}, bitmaps || {}, q, (p) => {
       let pct = 0
       let detail = null
       if (typeof p === 'number') {
@@ -23,7 +27,8 @@ self.onmessage = async (e) => {
       self.postMessage({ id, type: 'progress', progress: pct, detail })
     })
     const paths = outputs.map(({ layer, polylines }) => {
-      const planned = applyPathPlanning(polylines || [], doc || {}, Boolean(optimizeJoin))
+      const doJoin = Boolean(optimizeJoin) && !isPreview
+      const planned = applyPathPlanning(polylines || [], docForPreview, doJoin)
       return { layer, d: planned.map(polylineToPath).join(' ') }
     })
     self.postMessage({ id, type: 'done', outputs, paths })
