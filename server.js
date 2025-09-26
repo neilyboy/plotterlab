@@ -56,6 +56,21 @@ app.use('/presets', express.static(presetsPath, {
   }
 }))
 
+// Serve external plugins directory (optional)
+const pluginsPath = path.join(__dirname, 'plugins')
+app.use('/plugins', express.static(pluginsPath, {
+  index: false,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (/\.json$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-store')
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=3600')
+    }
+  }
+}))
+
 // Serve static files from dist
 const distPath = path.join(__dirname, 'dist')
 app.use(express.static(distPath, {

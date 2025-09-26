@@ -28,4 +28,9 @@ COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/presets ./presets
 
 EXPOSE 8080
+RUN apk add --no-cache curl \
+  && mkdir -p /app/plugins
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD sh -c 'curl -fsS http://localhost:${PORT:-8080}/api/health || exit 1'
 CMD ["node", "server.js"]
