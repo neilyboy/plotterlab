@@ -70,6 +70,8 @@ import { lorenzAttractor } from './lorenz.js'
 import { rosslerAttractor } from './rossler.js'
 import { sierpinski } from './sierpinski.js'
 import { cycloid } from './cycloid.js'
+import { penroseLike } from './penroseLike.js'
+import { thomasAttractor } from './thomas.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
@@ -116,4 +118,6 @@ export const GENERATORS = {
   , rossler: { name: 'Rössler Attractor', fn: rosslerAttractor, params: { a: 0.2, b: 0.2, c: 5.7, dt: 0.01, steps: 25000, x0: 0.1, y0: 0, z0: 0, scale: 10, centerX: 210, centerY: 148, rotDegXY: 0, simplifyTol: 0 } }
   , sierpinski: { name: 'Sierpinski (IFS)', fn: sierpinski, params: { iter: 80000, scale: 2.2, centerX: 210, centerY: 160, jitter: 0, simplifyTol: 0 } }
   , cycloid: { name: 'Cycloid (Epi/Hypo)', fn: cycloid, params: { kind: 'epi', R: 80, r: 23, d: 60, turns: 18, step: 0.006, centerX: 210, centerY: 148, scale: 1, multi: 1, simplifyTol: 0 } }
+  , penroseLike: { name: 'Penrose-like Rosette', fn: penroseLike, params: { layers: 9, innerR: 18, outerR: 120, scaleFactor: 1.61803398875, rotateDeg: 18, spokes: 0, centerX: 210, centerY: 148, jitter: 0, simplifyTol: 0 } }
+  , thomas: { name: "Thomas' Attractor", fn: thomasAttractor, params: { b: 0.19, dt: 0.02, steps: 30000, x0: 0.1, y0: 0, z0: 0, scale: 70, centerX: 210, centerY: 148, rotDegXY: 25, simplifyTol: 0 } }
 }

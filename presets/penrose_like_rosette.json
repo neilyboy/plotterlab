@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Penrose-like Rosette", "color": "#FFF200", "visible": true, "generator": "penroseLike", "params": {"layers": 10, "innerR": 18, "outerR": 132, "scaleFactor": 1.61803398875, "rotateDeg": 18, "spokes": 5, "centerX": 210, "centerY": 148, "jitter": 0.0, "simplifyTol": 0}}
+  ]
+}

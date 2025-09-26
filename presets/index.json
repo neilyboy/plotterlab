@@ -103,4 +103,5 @@
   , { "label": "Rössler Spiral", "file": "rossler_spiral.json", "tags": ["attractor","chaos","rossler"] }
   , { "label": "Cycloid Epitro Multi", "file": "cycloid_epitro_multi.json", "tags": ["cycloid","epitrochoid","multi"] }
   , { "label": "Sierpinski Triangle", "file": "sierpinski_triangle.json", "tags": ["ifs","sierpinski","fractal"] }
+  , { "label": "Penrose-like Rosette", "file": "penrose_like_rosette.json", "tags": ["penrose","rosette","golden"] }
 ]
