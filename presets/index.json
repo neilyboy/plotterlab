@@ -84,4 +84,16 @@
   , { "label": "Truchet Tiles → Moiré (Clip)", "file": "truchet_dual_moire.json", "tags": ["truchet","moire","clip"] }
   , { "label": "Flow Ribbons Swirl", "file": "flow_ribbons_swirl.json", "tags": ["flow","ribbons"] }
   , { "label": "Quasicrystal Animated Phase", "file": "quasicrystal_anim_phase.json", "tags": ["quasicrystal","animated"] }
+  , { "label": "Flow Field Vortex", "file": "flow_field_vortex.json", "tags": ["flow","field"] }
+  , { "label": "Quasicrystal Spiral Bloom", "file": "quasicrystal_spiral_bloom.json", "tags": ["quasicrystal"] }
+  , { "label": "Truchet Islands", "file": "truchet_islands.json", "tags": ["truchet"] }
+  , { "label": "MDI Pattern Grid", "file": "mdi_pattern_grid.json", "tags": ["mdi","pattern"] }
+  , { "label": "Polar Starburst Rosette", "file": "polar_starburst_rosette.json", "tags": ["polar","rosette"] }
+  , { "label": "Superformula Shell", "file": "superformula_shell.json", "tags": ["superformula"] }
+  , { "label": "Flow Ribbons Wave", "file": "flow_ribbons_wave.json", "tags": ["flow","ribbons"] }
+  , { "label": "L-system Plant", "file": "lsystem_plant.json", "tags": ["lsystem"] }
+  , { "label": "Maze Cavern", "file": "maze_cavern.json", "tags": ["maze"] }
+  , { "label": "Hilbert Shell", "file": "hilbert_shell.json", "tags": ["hilbert"] }
+  , { "label": "Star Lattice Twist", "file": "star_lattice_twist.json", "tags": ["lattice","star"] }
+  , { "label": "Spirograph Waves", "file": "spirograph_waves.json", "tags": ["spirograph"] }
 ]
