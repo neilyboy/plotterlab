@@ -96,4 +96,6 @@
   , { "label": "Hilbert Shell", "file": "hilbert_shell.json", "tags": ["hilbert"] }
   , { "label": "Star Lattice Twist", "file": "star_lattice_twist.json", "tags": ["lattice","star"] }
   , { "label": "Spirograph Waves", "file": "spirograph_waves.json", "tags": ["spirograph"] }
+  , { "label": "Rose Curve Petal Star", "file": "rose_curve_petal_star.json", "tags": ["rose","polar","star"] }
+  , { "label": "Superellipse Frame", "file": "superellipse_frame.json", "tags": ["superellipse","frame"] }
 ]

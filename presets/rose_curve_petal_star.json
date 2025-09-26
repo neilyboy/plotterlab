@@ -1,0 +1,34 @@
+{
+  "doc": {
+    "paperSize": "A3",
+    "orientation": "landscape",
+    "width": 420,
+    "height": 297,
+    "margin": 16,
+    "bleed": 0,
+    "strokeWidth": 1.1,
+    "bg": "#0b0f14",
+    "startPreset": "center"
+  },
+  "layers": [
+    {
+      "id": "l1",
+      "name": "Rose Curve Petal Star",
+      "color": "#2dd4bf",
+      "visible": true,
+      "generator": "roseCurve",
+      "params": {
+        "kNumerator": 7,
+        "kDenominator": 2,
+        "a": 140,
+        "phaseDeg": 0,
+        "turns": 8,
+        "step": 0.006,
+        "centerX": 210,
+        "centerY": 148,
+        "variant": "cos",
+        "simplifyTol": 0
+      }
+    }
+  ]
+}

@@ -63,10 +63,13 @@ import { reactionStrokes } from './reactionStrokes.js'
 import { clifford } from './clifford.js'
 import { sunflowerBands } from './sunflowerBands.js'
 import { combinator } from './combinator.js'
+import { roseCurve } from './roseCurve.js'
+import { superellipse } from './superellipse.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
   spirograph: { name: 'Spirograph', fn: spirograph, params: { R: 120, r: 35, d: 50, turns: 1300, step: 0.02, centerX: 210, centerY: 148, scale: 1, simplifyTol: 0 } },
+  roseCurve: { name: 'Rose Curve', fn: roseCurve, params: { kNumerator: 5, kDenominator: 2, a: 120, phaseDeg: 0, turns: 6, step: 0.01, centerX: 210, centerY: 148, variant: 'cos', simplifyTol: 0 } },
   polarStarburst: { name: 'Polar Starburst', fn: polarStarburst, params: { spikes: 72, spreadDeg: 6, linesPerSpike: 1, inner: 8, outer: null, jitterDeg: 2, lengthJitter: 0.15, centerX: null, centerY: null, margin: 20, simplifyTol: 0 } },
   flowRibbons: { name: 'Flow Ribbons', fn: flowRibbons, params: { seedsX: 42, seedsY: 60, minSpacing: 1.6, stepLen: 0.9, maxSteps: 1800, centers: 3, sep: 160, sigma: 90, swirl: 1.25, swirlAlt: true, baseAngleDeg: -18, drift: 0.25, noiseAmp: 0.15, noiseScale: 0.010, followOnly: false, margin: 20, simplifyTol: 0 } },
   mdiIconField: { name: 'MDI Icon Field', fn: mdiIconField, params: { namesCsv: 'mdiFlower,mdiRobot,mdiHeart', cols: 10, rows: 8, spacing: 36, jitter: 0.1, scaleMin: 5, scaleMax: 7, rotationJitter: 0.4, samples: 220, margin: 20, simplifyTol: 0 } },
@@ -102,4 +105,5 @@ export const GENERATORS = {
   clifford: { name: 'Clifford Attractor', fn: clifford, params: { a: -1.7, b: 1.3, c: -0.1, d: -1.21, iter: 150000, burn: 1000, margin: 20, simplifyTol: 0 } },
   sunflowerBands: { name: 'Sunflower Bands', fn: sunflowerBands, params: { count: 900, spacing: 3.2, angleDeg: 137.50776405003785, dotSize: 2.0, bandPeriod: 7, bandDuty: 0.55, jitter: 0.15, margin: 20, simplifyTol: 0 } },
   combinator: { name: 'Combinator', fn: combinator, params: { srcA: '', srcB: '', op: 'intersect', margin: 20, simplifyTol: 0 } }
+  , superellipse: { name: 'Superellipse', fn: superellipse, params: { a: 160, b: 110, n: 3.5, rotateDeg: 0, cx: 210, cy: 148, step: 0.01, simplifyTol: 0 } }
 }
