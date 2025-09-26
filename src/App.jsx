@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { saveAs } from 'file-saver'
   // Examples are now handled by <ExamplesPanel/>
 import JSZip from 'jszip'
-import { mdiContentSave, mdiPlus, mdiDelete, mdiEye, mdiEyeOff, mdiDownload, mdiShuffleVariant, mdiArrowUp, mdiArrowDown, mdiCrosshairsGps, mdiDotsVertical, mdiArrowCollapseVertical, mdiArrowExpandVertical, mdiFileDocumentOutline, mdiExportVariant, mdiLightbulbOutline, mdiLayersOutline, mdiLayersPlus, mdiStarPlus, mdiStar, mdiStarOutline, mdiSwapHorizontal, mdiFolderOpen, mdiRefresh, mdiClose, mdiImageMultipleOutline, mdiPalette, mdiFitToPageOutline, mdiSelectAll, mdiVectorSelection, mdiEraser, mdiStarOff, mdiCheck, mdiVectorSquare, mdiZipBox, mdiMinus, mdiFileCode } from '@mdi/js'
+import { mdiContentSave, mdiPlus, mdiDelete, mdiEye, mdiEyeOff, mdiDownload, mdiShuffleVariant, mdiArrowUp, mdiArrowDown, mdiCrosshairsGps, mdiDotsVertical, mdiArrowCollapseVertical, mdiArrowExpandVertical, mdiFileDocumentOutline, mdiExportVariant, mdiLightbulbOutline, mdiLayersOutline, mdiLayersPlus, mdiStarPlus, mdiStar, mdiStarOutline, mdiSwapHorizontal, mdiFolderOpen, mdiRefresh, mdiClose, mdiImageMultipleOutline, mdiPalette, mdiFitToPageOutline, mdiSelectAll, mdiVectorSelection, mdiEraser, mdiStarOff, mdiCheck, mdiVectorSquare, mdiZipBox, mdiMinus, mdiFileCode, mdiUndo, mdiRedo } from '@mdi/js'
 import { Icon } from './components/Icon.jsx'
 import Select from './components/Select.jsx'
 import ExamplesPanel from './components/panels/ExamplesPanel.jsx'
@@ -59,6 +59,7 @@ import './styles.css'
 import { computeRendered as renderAll } from './lib/renderer.js'
 import { applyPathPlanning } from './lib/pipeline/decorators.js'
 import { getGenerators } from './lib/generators/registry.js'
+import { useHistory } from './lib/useHistory.js'
 
 // Cross-browser unique ID helper (crypto.randomUUID fallback)
 const uid = () => {
@@ -547,6 +548,20 @@ export default function App() {
   }, [doc])
   const dDoc = useDebouncedValue(docRenderInput, 60)
   const dDocSig = useMemo(() => JSON.stringify(dDoc || {}), [dDoc])
+  const dLayersSig = useMemo(() => JSON.stringify(dLayers || []), [dLayers])
+
+  // Undo/Redo history integration
+  const { canUndo, canRedo, undo, redo, snapshot, restoringRef: restoringHistory } = useHistory({
+    getDocSnapshot: () => (docRenderInput || {}),
+    getLayersSnapshot: () => (layers || []),
+    setDoc,
+    setLayers,
+    max: 100
+  })
+  useEffect(() => {
+    if (!restoringHistory.current) snapshot()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dDocSig, dLayersSig])
 
   useEffect(() => { try { localStorage.setItem('plotterlab:doc', JSON.stringify(doc)) } catch(e){} }, [doc])
   useEffect(() => { try { localStorage.setItem('plotterlab:layers', JSON.stringify(layers)) } catch(e){} }, [layers])
@@ -1125,6 +1140,11 @@ export default function App() {
     const onKeyDown = (e) => {
       // Do not trigger global shortcuts while typing in inputs/selects/contenteditable
       if (isTypingTarget(e.target)) return
+      // Undo/Redo (Ctrl/Cmd + Z/Y)
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); undo(); return }
+        if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); redo(); return }
+      }
       switch (e.key) {
         case '+':
         case '=':
@@ -1932,6 +1952,12 @@ export default function App() {
             <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.max(0.2, (d.previewZoom||1)*0.9), previewAutoFit: false}))}>-</button>
             <input type="range" min="0.2" max="8" step="0.05" value={doc.previewZoom||1} onChange={e=>setDoc(d=>({...d, previewZoom: +e.target.value, previewAutoFit: false}))}/>
             <button className="btn" onClick={()=>setDoc(d=>({...d, previewZoom: Math.min(8, (d.previewZoom||1)*1.1), previewAutoFit: false}))}>+</button>
+            <button className="btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+              <Icon path={mdiUndo}/> {compactUI? null : 'Undo'}
+            </button>
+            <button className="btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)">
+              <Icon path={mdiRedo}/> {compactUI? null : 'Redo'}
+            </button>
             <button className="btn" onClick={()=>{ setDoc(d=>({...d, previewZoom: 1, previewPanX: 0, previewPanY: 0, previewAutoFit: false })); showToast('View reset') }} title="Reset view">
               <Icon path={mdiRefresh}/> {compactUI? null : 'Reset'}
             </button>
