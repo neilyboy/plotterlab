@@ -65,6 +65,11 @@ import { sunflowerBands } from './sunflowerBands.js'
 import { combinator } from './combinator.js'
 import { roseCurve } from './roseCurve.js'
 import { superellipse } from './superellipse.js'
+import { barnsleyFern } from './barnsleyFern.js'
+import { lorenzAttractor } from './lorenz.js'
+import { rosslerAttractor } from './rossler.js'
+import { sierpinski } from './sierpinski.js'
+import { cycloid } from './cycloid.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
@@ -106,4 +111,9 @@ export const GENERATORS = {
   sunflowerBands: { name: 'Sunflower Bands', fn: sunflowerBands, params: { count: 900, spacing: 3.2, angleDeg: 137.50776405003785, dotSize: 2.0, bandPeriod: 7, bandDuty: 0.55, jitter: 0.15, margin: 20, simplifyTol: 0 } },
   combinator: { name: 'Combinator', fn: combinator, params: { srcA: '', srcB: '', op: 'intersect', margin: 20, simplifyTol: 0 } }
   , superellipse: { name: 'Superellipse', fn: superellipse, params: { a: 160, b: 110, n: 3.5, rotateDeg: 0, cx: 210, cy: 148, step: 0.01, simplifyTol: 0 } }
+  , barnsleyFern: { name: 'Barnsley Fern (IFS)', fn: barnsleyFern, params: { iter: 90000, scale: 46, centerX: 210, centerY: 290, variant: 'classic', simplifyTol: 0 } }
+  , lorenz: { name: 'Lorenz Attractor', fn: lorenzAttractor, params: { sigma: 10, rho: 28, beta: 2.6666666667, dt: 0.005, steps: 20000, x0: 0.01, y0: 0, z0: 0, scale: 6, centerX: 210, centerY: 148, rotDegXY: -20, simplifyTol: 0 } }
+  , rossler: { name: 'Rössler Attractor', fn: rosslerAttractor, params: { a: 0.2, b: 0.2, c: 5.7, dt: 0.01, steps: 25000, x0: 0.1, y0: 0, z0: 0, scale: 10, centerX: 210, centerY: 148, rotDegXY: 0, simplifyTol: 0 } }
+  , sierpinski: { name: 'Sierpinski (IFS)', fn: sierpinski, params: { iter: 80000, scale: 2.2, centerX: 210, centerY: 160, jitter: 0, simplifyTol: 0 } }
+  , cycloid: { name: 'Cycloid (Epi/Hypo)', fn: cycloid, params: { kind: 'epi', R: 80, r: 23, d: 60, turns: 18, step: 0.006, centerX: 210, centerY: 148, scale: 1, multi: 1, simplifyTol: 0 } }
 }

@@ -8,6 +8,9 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
   const [examplesQuery, setExamplesQuery] = useState('')
   const [selected, setSelected] = useState('')
   const [tagFilter, setTagFilter] = useState([])
+  const [autoLoad, setAutoLoad] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('plotterlab:autoLoadExamples') || 'false') } catch { return false }
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +58,11 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
     if (!stillValid) {
       setSelected(filteredExamples[0].file)
     }
-  }, [filteredExamples])
+    // Auto-load behavior when enabled
+    if (autoLoad && onLoadExample) {
+      onLoadExample(filteredExamples[0].file)
+    }
+  }, [filteredExamples, autoLoad])
 
   const toggleTag = (t) => setTagFilter(list => list.includes(t) ? list.filter(x=>x!==t) : [...list, t])
 
@@ -86,6 +93,10 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
           onChange={(v)=>setSelected(v)}
           options={[{ label: '(Examples)', value: '' }, ...filteredExamples.map(e => ({ label: e.label, value: e.file }))]}
         />
+        <label className="flex items-center gap-2 text-xs opacity-80">
+          <input type="checkbox" checked={!!autoLoad} onChange={e=>{ const v = e.target.checked; setAutoLoad(v); try{ localStorage.setItem('plotterlab:autoLoadExamples', JSON.stringify(v)) } catch{} }} />
+          Auto-load on tag
+        </label>
         <button className="btn" onClick={()=>onLoadExample && onLoadExample(selected)} disabled={!selected} title="Load Example">
           {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Example</>)}
         </button>

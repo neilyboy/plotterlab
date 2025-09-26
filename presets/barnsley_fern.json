@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "portrait", "width": 297, "height": 420, "margin": 12, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Barnsley Fern", "color": "#2dd4bf", "visible": true, "generator": "barnsleyFern", "params": {"iter": 120000, "scale": 48, "centerX": 148, "centerY": 400, "variant": "classic", "simplifyTol": 0}}
+  ]
+}

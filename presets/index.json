@@ -98,4 +98,9 @@
   , { "label": "Spirograph Waves", "file": "spirograph_waves.json", "tags": ["spirograph"] }
   , { "label": "Rose Curve Petal Star", "file": "rose_curve_petal_star.json", "tags": ["rose","polar","star"] }
   , { "label": "Superellipse Frame", "file": "superellipse_frame.json", "tags": ["superellipse","frame"] }
+  , { "label": "Barnsley Fern (IFS)", "file": "barnsley_fern.json", "tags": ["ifs","fern","fractal"] }
+  , { "label": "Lorenz Butterfly", "file": "lorenz_butterfly.json", "tags": ["attractor","chaos","lorenz"] }
+  , { "label": "Rössler Spiral", "file": "rossler_spiral.json", "tags": ["attractor","chaos","rossler"] }
+  , { "label": "Cycloid Epitro Multi", "file": "cycloid_epitro_multi.json", "tags": ["cycloid","epitrochoid","multi"] }
+  , { "label": "Sierpinski Triangle", "file": "sierpinski_triangle.json", "tags": ["ifs","sierpinski","fractal"] }
 ]

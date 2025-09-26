@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Sierpinski Triangle", "color": "#2dd4bf", "visible": true, "generator": "sierpinski", "params": {"iter": 90000, "scale": 2.6, "centerX": 210, "centerY": 160, "jitter": 0.2, "simplifyTol": 0}}
+  ]
+}
