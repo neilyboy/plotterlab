@@ -45,6 +45,18 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
     return list
   }, [examples, examplesQuery, tagFilter])
 
+  // Auto-select the first filtered example to give immediate feedback
+  useEffect(() => {
+    if (!filteredExamples.length) {
+      if (selected) setSelected('')
+      return
+    }
+    const stillValid = filteredExamples.some(e => e.file === selected)
+    if (!stillValid) {
+      setSelected(filteredExamples[0].file)
+    }
+  }, [filteredExamples])
+
   const toggleTag = (t) => setTagFilter(list => list.includes(t) ? list.filter(x=>x!==t) : [...list, t])
 
   const setDefaultExample = () => {
@@ -66,7 +78,7 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
   return (
     <>
       <div className="sticky top-0 z-10 bg-panel/95 backdrop-blur py-2 border-b border-white/10 col-span-2 lg:col-span-3 mt-2">
-        <h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiLightbulbOutline}/> <span>Examples</span></h2>
+        <h2 className="font-medium px-1 flex items-center gap-2"><Icon path={mdiLightbulbOutline}/> <span>Examples</span> <span className="text-xs opacity-70">({filteredExamples.length})</span></h2>
       </div>
       <div className="flex gap-2 items-center col-span-2 lg:col-span-3">
         <input className="input flex-1" placeholder="Search examples…" value={examplesQuery} onChange={e=>setExamplesQuery(e.target.value)} />
