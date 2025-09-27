@@ -104,4 +104,9 @@
   , { "label": "Cycloid Epitro Multi", "file": "cycloid_epitro_multi.json", "tags": ["cycloid","epitrochoid","multi"] }
   , { "label": "Sierpinski Triangle", "file": "sierpinski_triangle.json", "tags": ["ifs","sierpinski","fractal"] }
   , { "label": "Penrose-like Rosette", "file": "penrose_like_rosette.json", "tags": ["penrose","rosette","golden"] }
+  , { "label": "Aizawa Spirals", "file": "aizawa_spirals.json", "tags": ["attractor","aizawa","chaos"] }
+  , { "label": "Ikeda Galaxy", "file": "ikeda_galaxy.json", "tags": ["map","ikeda","chaos"] }
+  , { "label": "Hénon Strange Loops", "file": "henon_loops.json", "tags": ["map","henon","chaos"] }
+  , { "label": "Penrose-like CMYK", "file": "penrose_like_cmyk.json", "tags": ["penrose","cmyk","rosette"] }
+  , { "label": "Cycloid Epitro CMYK", "file": "cycloid_epitro_cmyk.json", "tags": ["cycloid","epitrochoid","cmyk"] }
 ]

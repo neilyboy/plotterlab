@@ -72,6 +72,10 @@ import { sierpinski } from './sierpinski.js'
 import { cycloid } from './cycloid.js'
 import { penroseLike } from './penroseLike.js'
 import { thomasAttractor } from './thomas.js'
+import { aizawaAttractor } from './aizawa.js'
+import { halvorsenAttractor } from './halvorsen.js'
+import { ikedaMap } from './ikeda.js'
+import { henonMap } from './henon.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
@@ -120,4 +124,8 @@ export const GENERATORS = {
   , cycloid: { name: 'Cycloid (Epi/Hypo)', fn: cycloid, params: { kind: 'epi', R: 80, r: 23, d: 60, turns: 18, step: 0.006, centerX: 210, centerY: 148, scale: 1, multi: 1, simplifyTol: 0 } }
   , penroseLike: { name: 'Penrose-like Rosette', fn: penroseLike, params: { layers: 9, innerR: 18, outerR: 120, scaleFactor: 1.61803398875, rotateDeg: 18, spokes: 0, centerX: 210, centerY: 148, jitter: 0, simplifyTol: 0 } }
   , thomas: { name: "Thomas' Attractor", fn: thomasAttractor, params: { b: 0.19, dt: 0.02, steps: 30000, x0: 0.1, y0: 0, z0: 0, scale: 70, centerX: 210, centerY: 148, rotDegXY: 25, simplifyTol: 0 } }
+  , aizawa: { name: 'Aizawa Attractor', fn: aizawaAttractor, params: { a: 0.95, b: 0.7, c: 0.6, d: 3.5, e: 0.25, f: 0.1, dt: 0.01, steps: 50000, x0: 0.1, y0: 0, z0: 0, scale: 90, centerX: 210, centerY: 148, rotDegXY: 20, simplifyTol: 0 } }
+  , halvorsen: { name: 'Halvorsen Attractor', fn: halvorsenAttractor, params: { a: 1.4, dt: 0.005, steps: 60000, x0: 0.1, y0: 0, z0: 0, scale: 10, centerX: 210, centerY: 148, rotDegXY: 20, simplifyTol: 0 } }
+  , ikeda: { name: 'Ikeda Map', fn: ikedaMap, params: { u: 0.918, steps: 100000, x0: 0.1, y0: 0.0, scale: 90, centerX: 210, centerY: 148, burn: 1000, simplifyTol: 0 } }
+  , henon: { name: 'Hénon Map', fn: henonMap, params: { a: 1.4, b: 0.3, steps: 120000, x0: 0.1, y0: 0.0, scale: 160, centerX: 210, centerY: 160, burn: 1000, simplifyTol: 0 } }
 }

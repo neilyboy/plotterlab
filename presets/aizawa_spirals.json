@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.1, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Aizawa Spirals", "color": "#00AEEF", "visible": true, "generator": "aizawa", "params": {"a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1, "dt": 0.01, "steps": 60000, "x0": 0.1, "y0": 0, "z0": 0, "scale": 85, "centerX": 210, "centerY": 150, "rotDegXY": 18, "simplifyTol": 0}}
+  ]
+}
