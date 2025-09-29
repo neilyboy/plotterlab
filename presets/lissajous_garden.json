@@ -1,0 +1,9 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"lg1","name":"Lissajous Grid A","color":"#00AEEF","visible":true,
+      "generator":"lissajousGrid","params":{ "cols":10, "rows":7, "ax":3, "ay":2, "axStep":1, "ayStep":0, "phaseDeg":0, "steps":900, "scale":0.92, "margin":20, "simplifyTol":0 }},
+    {"id":"lg2","name":"Lissajous Grid B","color":"#EC008C","visible":true,
+      "generator":"lissajousGrid","params":{ "cols":10, "rows":7, "ax":2, "ay":3, "axStep":0, "ayStep":1, "phaseDeg":90, "steps":900, "scale":0.88, "margin":20, "simplifyTol":0 }}
+  ]
+}

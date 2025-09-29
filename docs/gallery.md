@@ -189,4 +189,6 @@ Below is a curated grid of final thumbnails generated from the presets in `prese
 <p align="center">
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/torus_knot_starlace.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/torus_knot_starlace.final.svg" width="200" alt="Torus Knot Starlace" /></a>
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/dragon_curve_cmyk.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/dragon_curve_cmyk.final.svg" width="200" alt="Dragon Curve CMYK" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_garden.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_garden.final.svg" width="200" alt="Lissajous Garden" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_cmyk_triptych.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_cmyk_triptych.final.svg" width="200" alt="Lissajous CMY Triptych" /></a>
 </p>

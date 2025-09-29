@@ -1,0 +1,11 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"lc1","name":"Lissajous CMY – C","color":"#00AEEF","visible":true,
+      "generator":"lissajousGrid","params":{ "cols":9, "rows":7, "ax":3, "ay":2, "axStep":1, "ayStep":0, "phaseDeg":0, "steps":850, "scale":0.9, "margin":20, "simplifyTol":0 }},
+    {"id":"lc2","name":"Lissajous CMY – M","color":"#EC008C","visible":true,
+      "generator":"lissajousGrid","params":{ "cols":9, "rows":7, "ax":4, "ay":3, "axStep":1, "ayStep":0, "phaseDeg":45, "steps":850, "scale":0.9, "margin":20, "simplifyTol":0 }},
+    {"id":"lc3","name":"Lissajous CMY – Y","color":"#FFF200","visible":true,
+      "generator":"lissajousGrid","params":{ "cols":9, "rows":7, "ax":5, "ay":4, "axStep":1, "ayStep":0, "phaseDeg":90, "steps":850, "scale":0.9, "margin":20, "simplifyTol":0 }}
+  ]
+}

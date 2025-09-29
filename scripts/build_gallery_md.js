@@ -67,19 +67,24 @@ async function main() {
     :root { color-scheme: dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; background:#0b0f14; color:#e5e7eb; }
     header { position: sticky; top:0; backdrop-filter: blur(6px); background: rgba(12,16,22,0.8); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; }
+    .headerRow { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
     main { padding: 16px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
     .card { display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: rgba(0,0,0,0.2); text-decoration: none; color: inherit; overflow: hidden; }
     .card img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: rgba(0,0,0,0.3); }
     .caption { font-size: 12px; opacity: 0.8; padding: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
     .muted { opacity: 0.7; font-size: 12px; }
+    a.link { color: #93c5fd; text-underline-offset: 2px; }
   </style>
   <link rel="icon" href="data:," />
   <meta name="robots" content="noindex" />
   </head>
 <body>
   <header>
-    <div>Plotter Lab – Examples Gallery <span class="muted">(auto-generated)</span></div>
+    <div class="headerRow">
+      <div>Plotter Lab – Examples Gallery <span class="muted">(auto-generated)</span></div>
+      <div><a class="link" href="https://github.com/${REPO_SLUG}">View on GitHub</a></div>
+    </div>
   </header>
   <main>
     <div class="grid">
