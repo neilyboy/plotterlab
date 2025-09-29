@@ -118,4 +118,6 @@
   , { "label": "Dragon Curve CMYK", "file": "dragon_curve_cmyk.json", "tags": ["lsystem","dragon","cmyk"] }
   , { "label": "Lissajous Garden", "file": "lissajous_garden.json", "tags": ["lissajous","grid"] }
   , { "label": "Lissajous CMY Triptych", "file": "lissajous_cmyk_triptych.json", "tags": ["lissajous","cmyk","grid"] }
+  , { "label": "Hopalong Nebula", "file": "hopalong_nebula.json", "tags": ["attractor","hopalong","chaos"] }
+  , { "label": "Hopalong CMY Bloom", "file": "hopalong_cmyk_bloom.json", "tags": ["attractor","hopalong","cmyk"] }
 ]

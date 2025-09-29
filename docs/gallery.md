@@ -191,4 +191,9 @@ Below is a curated grid of final thumbnails generated from the presets in `prese
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/dragon_curve_cmyk.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/dragon_curve_cmyk.final.svg" width="200" alt="Dragon Curve CMYK" /></a>
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_garden.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_garden.final.svg" width="200" alt="Lissajous Garden" /></a>
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_cmyk_triptych.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lissajous_cmyk_triptych.final.svg" width="200" alt="Lissajous CMY Triptych" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_nebula.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_nebula.final.svg" width="200" alt="Hopalong Nebula" /></a>
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_cmyk_bloom.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_cmyk_bloom.final.svg" width="200" alt="Hopalong CMY Bloom" /></a>
 </p>
