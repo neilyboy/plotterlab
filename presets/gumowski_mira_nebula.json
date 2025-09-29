@@ -1,0 +1,7 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"gm1","name":"Gumowski–Mira Nebula","color":"#EC008C","visible":true,
+      "generator":"gumowskiMira","params":{ "a":0.008, "b":0.05, "m":-0.5, "steps":170000, "burn":1400, "x0":0.1, "y0":0.0, "scale":115, "centerX":210, "centerY":148, "rotDeg":12 }}
+  ]
+}

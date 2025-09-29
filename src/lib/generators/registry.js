@@ -81,6 +81,9 @@ import { circlePacking } from './circlePacking.js'
 import { torusKnot } from './torusKnot.js'
 import { lissajousGrid } from './lissajousGrid.js'
 import { hopalong } from './hopalong.js'
+import { gumowskiMira } from './gumowskiMira.js'
+import { lozi } from './lozi.js'
+import { superellipseGrid } from './superellipseGrid.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
@@ -138,4 +141,7 @@ export const GENERATORS = {
   , torusKnot: { name: 'Torus Knot', fn: torusKnot, params: { p: 3, q: 2, R: 120, r: 40, steps: 3000, rotateDeg: 0, perspective: 0.12, centerX: 210, centerY: 148, scale: 1, simplifyTol: 0 } }
   , lissajousGrid: { name: 'Lissajous Grid', fn: lissajousGrid, params: { cols: 10, rows: 7, ax: 3, ay: 2, axStep: 1, ayStep: 0, phaseDeg: 0, steps: 900, scale: 0.9, margin: 20, simplifyTol: 0 } }
   , hopalong: { name: 'Hopalong Attractor', fn: hopalong, params: { a: 2.0, b: 1.0, c: 0.5, steps: 120000, burn: 1000, x0: 0.1, y0: 0.0, scale: 90, centerX: 210, centerY: 148, rotDeg: 0, simplifyTol: 0 } }
+  , gumowskiMira: { name: 'Gumowski–Mira Attractor', fn: gumowskiMira, params: { a: 0.008, b: 0.05, m: -0.5, steps: 160000, burn: 1200, x0: 0.1, y0: 0.0, scale: 110, centerX: 210, centerY: 148, rotDeg: 0, simplifyTol: 0 } }
+  , lozi: { name: 'Lozi Attractor', fn: lozi, params: { a: 1.7, b: 0.5, steps: 140000, burn: 1200, x0: 0.1, y0: 0.0, scale: 160, centerX: 210, centerY: 148, rotDeg: 0, simplifyTol: 0 } }
+  , superellipseGrid: { name: 'Superellipse Grid', fn: superellipseGrid, params: { cols: 10, rows: 7, a: 0.48, b: 0.48, n: 3.0, nStep: 0.15, rotateDeg: 0, steps: 360, scale: 1.0, margin: 20, simplifyTol: 0 } }
 }

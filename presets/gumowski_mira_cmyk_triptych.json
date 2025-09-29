@@ -1,0 +1,11 @@
+{
+  "doc": {"paperSize":"A3","orientation":"landscape","width":420,"height":297,"margin":20,"bleed":0,"strokeWidth":1.0,"bg":"#0b0f14","startPreset":"center"},
+  "layers": [
+    {"id":"gmc","name":"Gumowski–Mira C","color":"#00AEEF","visible":true,
+      "generator":"gumowskiMira","params":{ "a":0.008, "b":0.05, "m":-0.52, "steps":150000, "burn":1400, "x0":0.1, "y0":0.0, "scale":112, "rotDeg":0 }},
+    {"id":"gmm","name":"Gumowski–Mira M","color":"#EC008C","visible":true,
+      "generator":"gumowskiMira","params":{ "a":0.008, "b":0.05, "m":-0.48, "steps":150000, "burn":1400, "x0":0.1, "y0":0.0, "scale":112, "rotDeg":18 }},
+    {"id":"gmy","name":"Gumowski–Mira Y","color":"#FFF200","visible":true,
+      "generator":"gumowskiMira","params":{ "a":0.008, "b":0.05, "m":-0.50, "steps":150000, "burn":1400, "x0":0.1, "y0":0.0, "scale":112, "rotDeg":-18 }}
+  ]
+}

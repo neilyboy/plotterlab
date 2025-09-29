@@ -196,4 +196,13 @@ Below is a curated grid of final thumbnails generated from the presets in `prese
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_cmyk_bloom.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hopalong_cmyk_bloom.final.svg" width="200" alt="Hopalong CMY Bloom" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/gumowski_mira_nebula.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/gumowski_mira_nebula.final.svg" width="200" alt="Gumowski–Mira Nebula" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/gumowski_mira_cmyk_triptych.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/gumowski_mira_cmyk_triptych.final.svg" width="200" alt="Gumowski–Mira CMY Triptych" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lozi_blade_wings.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lozi_blade_wings.final.svg" width="200" alt="Lozi Blade Wings" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lozi_cmyk_bloom.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lozi_cmyk_bloom.final.svg" width="200" alt="Lozi CMY Bloom" /></a>
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/superellipse_garden.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/superellipse_garden.final.svg" width="200" alt="Superellipse Garden" /></a>
+  <a href="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/superellipse_cmyk_quilt.final.svg"><img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/superellipse_cmyk_quilt.final.svg" width="200" alt="Superellipse CMY Quilt" /></a>
 </p>

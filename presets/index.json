@@ -120,4 +120,10 @@
   , { "label": "Lissajous CMY Triptych", "file": "lissajous_cmyk_triptych.json", "tags": ["lissajous","cmyk","grid"] }
   , { "label": "Hopalong Nebula", "file": "hopalong_nebula.json", "tags": ["attractor","hopalong","chaos"] }
   , { "label": "Hopalong CMY Bloom", "file": "hopalong_cmyk_bloom.json", "tags": ["attractor","hopalong","cmyk"] }
+  , { "label": "Gumowski–Mira Nebula", "file": "gumowski_mira_nebula.json", "tags": ["attractor","gumowski-mira","chaos"] }
+  , { "label": "Gumowski–Mira CMY Triptych", "file": "gumowski_mira_cmyk_triptych.json", "tags": ["attractor","gumowski-mira","cmyk"] }
+  , { "label": "Lozi Blade Wings", "file": "lozi_blade_wings.json", "tags": ["attractor","lozi","chaos"] }
+  , { "label": "Lozi CMY Bloom", "file": "lozi_cmyk_bloom.json", "tags": ["attractor","lozi","cmyk"] }
+  , { "label": "Superellipse Garden", "file": "superellipse_garden.json", "tags": ["superellipse","grid"] }
+  , { "label": "Superellipse CMY Quilt", "file": "superellipse_cmyk_quilt.json", "tags": ["superellipse","cmyk","grid"] }
 ]
