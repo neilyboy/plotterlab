@@ -8,6 +8,9 @@ on:
       - 'src/**'
       - 'scripts/generate_thumbs.js'
 
+permissions:
+  contents: write
+
 jobs:
   thumbs:
     runs-on: ubuntu-latest
@@ -40,4 +43,4 @@ jobs:
         with:
           commit_message: 'chore(ci): update thumbs and docs/gallery.md'
           branch: ${{ github.ref_name }}
-          file_pattern: 'public/thumbs/** docs/gallery.md'
+          file_pattern: 'public/thumbs/** docs/gallery.md docs/index.html'
