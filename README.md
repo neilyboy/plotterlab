@@ -4,6 +4,8 @@
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen)](https://neilyboy.github.io/plotterlab/)
+[![Deploy Docs](https://github.com/neilyboy/plotterlab/actions/workflows/pages.yml/badge.svg?branch=main)](https://github.com/neilyboy/plotterlab/actions/workflows/pages.yml)
 
 A modern, dark-themed web app for creating multi-layer generative SVG artwork and exporting clean per-layer SVGs and GRBL-compatible G-code for plotters.
 
@@ -236,6 +238,8 @@ This project’s code is MIT licensed. External dependencies retain their respec
 ## 🎨 Example Thumbnails
 
 Auto-generated SVG thumbnails from `public/thumbs/` (click to view):
+
+Live gallery: https://neilyboy.github.io/plotterlab/
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/iso_triple_lobes.draft.svg" width="180" alt="Iso Triple Lobes" />
