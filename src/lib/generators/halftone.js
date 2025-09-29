@@ -77,6 +77,16 @@ function rectPolygon(x0, y0, x1, y1) {
   return [[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]]
 }
 
+// Hoisted helper so all branches (including 'radialDots') can call it safely
+function circlePoly(cx, cy, r, sides = 16) {
+  const out = []
+  for (let i = 0; i <= sides; i++) {
+    const t = (i / sides) * Math.PI * 2
+    out.push([cx + Math.cos(t)*r, cy + Math.sin(t)*r])
+  }
+  return out
+}
+
 const BAYER8 = [
    0, 48, 12, 60,  3, 51, 15, 63,
   32, 16, 44, 28, 35, 19, 47, 31,
@@ -358,14 +368,6 @@ export function halftone({ bitmap, width = 420, height = 297, margin = 20, spaci
   const jmin = Math.floor((Math.min(...projV) - spacing*0.5) / spacing)
   const jmax = Math.ceil((Math.max(...projV) + spacing*0.5) / spacing)
 
-  const circlePoly = (cx, cy, r, sides = 16) => {
-    const out = []
-    for (let i = 0; i <= sides; i++) {
-      const t = (i / sides) * Math.PI * 2
-      out.push([cx + Math.cos(t)*r, cy + Math.sin(t)*r])
-    }
-    return out
-  }
   const ellipsePoly = (cx, cy, rx, ry, sides = 18) => {
     // Oriented by dir (rx along dir, ry along n)
     const out = []

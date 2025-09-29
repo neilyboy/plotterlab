@@ -1,0 +1,9 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "c","name":"Aizawa C","color":"#00AEEF","visible": true,"generator":"aizawa","params": {"a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1, "dt": 0.01, "steps": 60000, "x0": 0.1, "y0": 0, "z0": 0, "scale": 82, "centerX": 210, "centerY": 150, "rotDegXY": 0,  "simplifyTol": 0}},
+    {"id": "m","name":"Aizawa M","color":"#EC008C","visible": true,"generator":"aizawa","params": {"a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1, "dt": 0.01, "steps": 60000, "x0": -0.2, "y0": 0.05, "z0": 0.03, "scale": 84, "centerX": 210, "centerY": 150, "rotDegXY": 12, "simplifyTol": 0}},
+    {"id": "y","name":"Aizawa Y","color":"#FFF200","visible": true,"generator":"aizawa","params": {"a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1, "dt": 0.01, "steps": 60000, "x0": 0.05, "y0": -0.1, "z0": 0.02, "scale": 86, "centerX": 210, "centerY": 150, "rotDegXY": 24, "simplifyTol": 0}},
+    {"id": "k","name":"Aizawa K","color":"#111111","visible": true,"generator":"aizawa","params": {"a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1, "dt": 0.01, "steps": 60000, "x0": -0.05, "y0": 0.08, "z0": -0.03, "scale": 88, "centerX": 210, "centerY": 150, "rotDegXY": 36, "simplifyTol": 0}}
+  ]
+}

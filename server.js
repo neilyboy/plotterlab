@@ -2,6 +2,9 @@ import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import * as MDI from '@mdi/js'
+import fs from 'fs/promises'
+import { computeRendered as renderAll } from './src/lib/renderer.js'
+import { polylineToPath } from './src/lib/geometry.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -70,6 +73,93 @@ app.use('/plugins', express.static(pluginsPath, {
     }
   }
 }))
+
+// Serve additional static assets (thumbnails, etc.) from ./public under /static
+const publicPath = path.join(__dirname, 'public')
+app.use('/static', express.static(publicPath, {
+  index: false,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (/\.svg$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400')
+    }
+  }
+}))
+
+// On-demand thumbnail generation for presets (SVG)
+// GET /api/thumb/:file?q=draft|final
+app.get('/api/thumb/:file', async (req, res) => {
+  try {
+    const file = String(req.params.file || '')
+    if (!/^[A-Za-z0-9._\-]+$/.test(file)) return res.status(400).json({ error: 'bad_name' })
+    const variant = (req.query.q === 'draft') ? 'draft' : 'final'
+    const presetPath = path.join(__dirname, 'presets', file)
+    const txt = await fs.readFile(presetPath, 'utf8')
+    const json = JSON.parse(txt)
+  const doc = { ...(json.doc || {}), optimize: 'none', fastPreview: variant === 'draft', previewQuality: variant === 'draft' ? 0.5 : 1 }
+  const layers = Array.isArray(json.layers) ? json.layers.map(l => ({ ...l, visible: true })) : []
+  let outputs = []
+  let hadError = false
+  try {
+    outputs = renderAll(layers, doc, {}, {}, variant === 'draft' ? 0.6 : 1)
+  } catch (e) {
+    hadError = true
+  }
+  // Build compact SVG
+  const docW = Math.max(10, Number(doc.width) || 420)
+  const docH = Math.max(10, Number(doc.height) || 297)
+  const bg = doc.bg || '#0b0f14'
+  const paths = (outputs || []).map(({ layer, polylines }) => ({
+    color: layer.color || '#fff',
+    polys: polylines || []
+  })).filter(p => p.polys.length > 0)
+  // Compute art bounds
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const p of paths) {
+    for (const poly of p.polys) {
+      for (const [x,y] of poly) {
+        if (x < minX) minX = x
+        if (y < minY) minY = y
+        if (x > maxX) maxX = x
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  const hasArt = Number.isFinite(minX) && Number.isFinite(minY) && Number.isFinite(maxX) && Number.isFinite(maxY)
+  const pad = 8
+  const vbX = hasArt ? (minX - pad) : 0
+  const vbY = hasArt ? (minY - pad) : 0
+  const vbW = hasArt ? Math.max(10, (maxX - minX) + 2*pad) : docW
+  const vbH = hasArt ? Math.max(10, (maxY - minY) + 2*pad) : docH
+  const svgPaths = []
+  for (const p of paths) {
+    const d = p.polys.map(poly => polylineToPath(poly)).join(' ')
+    if (d) svgPaths.push(`<path d="${d}" fill="none" stroke="${p.color}" stroke-width="1" vector-effect="non-scaling-stroke"/>`)
+  }
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${vbW}" height="${vbH}" shape-rendering="geometricPrecision">`,
+    `<rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="${bg}"/>`,
+    ...svgPaths,
+    `</svg>`
+  ].join('')
+    // Save to public/thumbs for reuse
+    const safeBase = file.replace(/[^A-Za-z0-9_\-\.]+/g, '_').replace(/\.json$/i, '')
+    const thumbsDir = path.join(publicPath, 'thumbs')
+    await fs.mkdir(thumbsDir, { recursive: true })
+    const outPath = path.join(thumbsDir, `${safeBase}.${variant}.svg`)
+    // Only persist when we had no error
+    if (!hadError) {
+      await fs.writeFile(outPath, svg, 'utf8')
+    }
+    res.set('Content-Type', 'image/svg+xml')
+    res.set('Cache-Control', 'public, max-age=86400')
+    res.send(svg)
+  } catch (err) {
+    console.error('thumb error', err)
+    res.status(500).json({ error: 'thumb_failed' })
+  }
+})
 
 // Serve static files from dist
 const distPath = path.join(__dirname, 'dist')

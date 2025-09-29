@@ -18,4 +18,5 @@ services:
     volumes:
       - ./presets:/app/presets:rw
       - ./plugins:/app/plugins:rw
+      - ./public:/app/public:rw
     restart: unless-stopped

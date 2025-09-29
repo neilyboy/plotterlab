@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Rucklidge Wings", "color": "#2dd4bf", "visible": true, "generator": "rucklidge", "params": {"a": 2.0, "b": 1.0, "c": 6.7, "d": 0.0, "dt": 0.003, "steps": 56000, "x0": 0.08, "y0": 0.02, "z0": 0.0, "scale": 12.5, "centerX": 210, "centerY": 150, "rotDegXY": 14, "simplifyTol": 0}}
+  ]
+}

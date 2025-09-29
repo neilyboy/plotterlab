@@ -1,0 +1,9 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "c","name":"Lorenz C","color":"#00AEEF","visible": true,"generator":"lorenz","params": {"sigma": 10, "rho": 28, "beta": 2.6666666667, "dt": 0.005, "steps": 34000, "x0": 0.1,  "y0": 0.0,  "z0": 0.0,  "scale": 7.0, "centerX": 210, "centerY": 150, "rotDegXY": -20, "simplifyTol": 0}},
+    {"id": "m","name":"Lorenz M","color":"#EC008C","visible": true,"generator":"lorenz","params": {"sigma": 10, "rho": 28, "beta": 2.6666666667, "dt": 0.005, "steps": 34000, "x0": -0.12, "y0": 0.06, "z0": 0.02, "scale": 7.1, "centerX": 210, "centerY": 150, "rotDegXY": 0,    "simplifyTol": 0}},
+    {"id": "y","name":"Lorenz Y","color":"#FFF200","visible": true,"generator":"lorenz","params": {"sigma": 10, "rho": 28, "beta": 2.6666666667, "dt": 0.005, "steps": 34000, "x0": 0.05, "y0": -0.08, "z0": -0.03, "scale": 7.2, "centerX": 210, "centerY": 150, "rotDegXY": 20,   "simplifyTol": 0}},
+    {"id": "k","name":"Lorenz K","color":"#111111","visible": true,"generator":"lorenz","params": {"sigma": 10, "rho": 28, "beta": 2.6666666667, "dt": 0.005, "steps": 34000, "x0": -0.06, "y0": 0.03, "z0": 0.04,  "scale": 7.3, "centerX": 210, "centerY": 150, "rotDegXY": 40,   "simplifyTol": 0}}
+  ]
+}

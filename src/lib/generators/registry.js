@@ -76,6 +76,9 @@ import { aizawaAttractor } from './aizawa.js'
 import { halvorsenAttractor } from './halvorsen.js'
 import { ikedaMap } from './ikeda.js'
 import { henonMap } from './henon.js'
+import { rucklidgeAttractor } from './rucklidge.js'
+import { circlePacking } from './circlePacking.js'
+import { torusKnot } from './torusKnot.js'
 
 // Built-in generators (static)
 export const GENERATORS = {
@@ -128,4 +131,7 @@ export const GENERATORS = {
   , halvorsen: { name: 'Halvorsen Attractor', fn: halvorsenAttractor, params: { a: 1.4, dt: 0.005, steps: 60000, x0: 0.1, y0: 0, z0: 0, scale: 10, centerX: 210, centerY: 148, rotDegXY: 20, simplifyTol: 0 } }
   , ikeda: { name: 'Ikeda Map', fn: ikedaMap, params: { u: 0.918, steps: 100000, x0: 0.1, y0: 0.0, scale: 90, centerX: 210, centerY: 148, burn: 1000, simplifyTol: 0 } }
   , henon: { name: 'Hénon Map', fn: henonMap, params: { a: 1.4, b: 0.3, steps: 120000, x0: 0.1, y0: 0.0, scale: 160, centerX: 210, centerY: 160, burn: 1000, simplifyTol: 0 } }
+  , rucklidge: { name: 'Rucklidge Attractor', fn: rucklidgeAttractor, params: { a: 2.0, b: 1.0, c: 6.7, d: 0.0, dt: 0.003, steps: 50000, x0: 0.1, y0: 0, z0: 0, scale: 12, centerX: 210, centerY: 148, rotDegXY: 10, simplifyTol: 0 } }
+  , circlePacking: { name: 'Circle Packing', fn: circlePacking, params: { margin: 20, minR: 6, maxR: 24, attempts: 6000, relax: 0.9, segments: 36, inside: 'rect', simplifyTol: 0 } }
+  , torusKnot: { name: 'Torus Knot', fn: torusKnot, params: { p: 3, q: 2, R: 120, r: 40, steps: 3000, rotateDeg: 0, perspective: 0.12, centerX: 210, centerY: 148, scale: 1, simplifyTol: 0 } }
 }

@@ -109,4 +109,11 @@
   , { "label": "Hénon Strange Loops", "file": "henon_loops.json", "tags": ["map","henon","chaos"] }
   , { "label": "Penrose-like CMYK", "file": "penrose_like_cmyk.json", "tags": ["penrose","cmyk","rosette"] }
   , { "label": "Cycloid Epitro CMYK", "file": "cycloid_epitro_cmyk.json", "tags": ["cycloid","epitrochoid","cmyk"] }
+  , { "label": "Circle Packing Orbits", "file": "circle_packing_orbits.json", "tags": ["packing","circles"] }
+  , { "label": "Rucklidge Wings", "file": "rucklidge_wings.json", "tags": ["attractor","rucklidge","chaos"] }
+  , { "label": "Thomas Knots", "file": "thomas_knots.json", "tags": ["attractor","thomas","chaos"] }
+  , { "label": "Aizawa CMYK", "file": "aizawa_cmyk.json", "tags": ["attractor","aizawa","cmyk"] }
+  , { "label": "Lorenz CMYK", "file": "lorenz_cmyk.json", "tags": ["attractor","lorenz","cmyk"] }
+  , { "label": "Torus Knot Starlace", "file": "torus_knot_starlace.json", "tags": ["knot","torus","3d"] }
+  , { "label": "Dragon Curve CMYK", "file": "dragon_curve_cmyk.json", "tags": ["lsystem","dragon","cmyk"] }
 ]

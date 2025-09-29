@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.1, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Torus Knot Starlace", "color": "#FFF200", "visible": true, "generator": "torusKnot", "params": {"p": 5, "q": 2, "R": 130, "r": 44, "steps": 4200, "rotateDeg": 18, "perspective": 0.10, "centerX": 210, "centerY": 148, "scale": 1.0, "simplifyTol": 0}}
+  ]
+}

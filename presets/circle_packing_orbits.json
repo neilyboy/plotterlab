@@ -1,0 +1,6 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 18, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id": "l1", "name": "Circle Packing Orbits", "color": "#2dd4bf", "visible": true, "generator": "circlePacking", "params": {"margin": 24, "minR": 5, "maxR": 26, "attempts": 9000, "relax": 0.92, "segments": 48, "inside": "circle", "simplifyTol": 0}}
+  ]
+}

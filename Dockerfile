@@ -26,10 +26,14 @@ RUN npm ci --omit=dev || npm install --omit=dev --no-audit --no-fund
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/presets ./presets
+# Server needs src/lib for renderer + geometry + generators used by /api/thumb
+COPY --from=builder /app/src/lib ./src/lib
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/scripts ./scripts
 
 EXPOSE 8080
 RUN apk add --no-cache curl \
-  && mkdir -p /app/plugins
+  && mkdir -p /app/plugins /app/public/thumbs
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD sh -c 'curl -fsS http://localhost:${PORT:-8080}/api/health || exit 1'

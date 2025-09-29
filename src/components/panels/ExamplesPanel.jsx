@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { mdiFolderOpen, mdiLightbulbOutline, mdiStarOff, mdiStarPlus } from '@mdi/js'
+import { mdiFolderOpen, mdiLightbulbOutline, mdiStarOff, mdiStarPlus, mdiImageMultipleOutline } from '@mdi/js'
 import Select from '../Select.jsx'
 import { Icon } from '../Icon.jsx'
+import ExamplesGallery from '../ExamplesGallery.jsx'
 
 export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetDefault, onClearDefault }) {
   const [examples, setExamples] = useState([])
@@ -11,6 +12,7 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
   const [autoLoad, setAutoLoad] = useState(() => {
     try { return JSON.parse(localStorage.getItem('plotterlab:autoLoadExamples') || 'false') } catch { return false }
   })
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -97,6 +99,9 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
           <input type="checkbox" checked={!!autoLoad} onChange={e=>{ const v = e.target.checked; setAutoLoad(v); try{ localStorage.setItem('plotterlab:autoLoadExamples', JSON.stringify(v)) } catch{} }} />
           Auto-load on tag
         </label>
+        <button className="btn" onClick={()=>setGalleryOpen(true)} title="Open Examples Gallery">
+          <Icon path={mdiImageMultipleOutline}/> {compactUI ? 'Gallery' : 'Open Gallery'}
+        </button>
         <button className="btn" onClick={()=>onLoadExample && onLoadExample(selected)} disabled={!selected} title="Load Example">
           {compactUI ? (<><Icon path={mdiFolderOpen}/> Load</>) : (<><Icon path={mdiFolderOpen}/> Load Example</>)}
         </button>
@@ -119,6 +124,7 @@ export default function ExamplesPanel({ compactUI = false, onLoadExample, onSetD
           )}
         </div>
       )}
+      <ExamplesGallery open={galleryOpen} onClose={()=>setGalleryOpen(false)} onLoad={(file)=>{ onLoadExample && onLoadExample(file); setSelected(file); setGalleryOpen(false) }} />
     </>
   )
 }

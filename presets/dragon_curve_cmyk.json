@@ -1,0 +1,9 @@
+{
+  "doc": {"paperSize": "A3", "orientation": "landscape", "width": 420, "height": 297, "margin": 16, "bleed": 0, "strokeWidth": 1.0, "bg": "#0b0f14", "startPreset": "center"},
+  "layers": [
+    {"id":"c","name":"Dragon C","color":"#00AEEF","visible":true,"generator":"lsystem","params":{"preset":"dragon","iterations": 12, "angleDeg": 90, "step": 4, "jitter": 0.0 }},
+    {"id":"m","name":"Dragon M","color":"#EC008C","visible":true,"generator":"lsystem","params":{"preset":"dragon","iterations": 12, "angleDeg": 90, "step": 4, "jitter": 0.0 }},
+    {"id":"y","name":"Dragon Y","color":"#FFF200","visible":true,"generator":"lsystem","params":{"preset":"dragon","iterations": 12, "angleDeg": 90, "step": 4, "jitter": 0.0 }},
+    {"id":"k","name":"Dragon K","color":"#111111","visible":true,"generator":"lsystem","params":{"preset":"dragon","iterations": 12, "angleDeg": 90, "step": 4, "jitter": 0.0 }}
+  ]
+}
