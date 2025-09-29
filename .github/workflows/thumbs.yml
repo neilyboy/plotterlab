@@ -1,0 +1,43 @@
+name: Generate Thumbnails
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'presets/**'
+      - 'src/**'
+      - 'scripts/generate_thumbs.js'
+
+jobs:
+  thumbs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app (to ensure renderer compiles)
+        run: npm run build
+
+      - name: Generate draft thumbnails
+        run: node scripts/generate_thumbs.js draft
+
+      - name: Generate final thumbnails
+        run: node scripts/generate_thumbs.js final
+
+      - name: Build docs gallery
+        run: node scripts/build_gallery_md.js
+
+      - name: Commit and push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore(ci): update thumbs and docs/gallery.md'
+          branch: ${{ github.ref_name }}
+          file_pattern: 'public/thumbs/** docs/gallery.md'

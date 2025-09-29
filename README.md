@@ -238,20 +238,22 @@ This project’s code is MIT licensed. External dependencies retain their respec
 Auto-generated SVG thumbnails from `public/thumbs/` (click to view):
 
 <p align="center">
-  <img src="public/thumbs/iso_triple_lobes.final.svg" width="180" alt="Iso Triple Lobes" />
-  <img src="public/thumbs/iso_hourglass.final.svg" width="180" alt="Iso Hourglass" />
-  <img src="public/thumbs/white_glow_spiro.final.svg" width="180" alt="White Glow Spiro" />
-  <img src="public/thumbs/super_bloom_twist.final.svg" width="180" alt="Super Bloom Twist" />
-  <img src="public/thumbs/stripebands_radial_bloom.final.svg" width="180" alt="Stripebands Radial Bloom" />
-  <img src="public/thumbs/quasicrystal_bloom.final.svg" width="180" alt="Quasicrystal Bloom" />
-  <img src="public/thumbs/star_lattice_bands_clip.final.svg" width="180" alt="Star Lattice Bands Clip" />
-  <img src="public/thumbs/hilbert_double_warp.final.svg" width="180" alt="Hilbert Double Warp" />
-  <img src="public/thumbs/rosette_weave_knot.final.svg" width="180" alt="Rosette Weave Knot" />
-  <img src="public/thumbs/mdi_pattern_grid.final.svg" width="180" alt="MDI Pattern Grid" />
-  <img src="public/thumbs/pixel_mosaic_rosette_clip.final.svg" width="180" alt="Pixel Mosaic Rosette" />
-  <img src="public/thumbs/lorenz_butterfly.final.svg" width="180" alt="Lorenz Butterfly" />
-  <img src="public/thumbs/dragon_curve_cmyk.final.svg" width="180" alt="Dragon Curve CMYK" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/iso_triple_lobes.final.svg" width="180" alt="Iso Triple Lobes" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/iso_hourglass.final.svg" width="180" alt="Iso Hourglass" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/white_glow_spiro.final.svg" width="180" alt="White Glow Spiro" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/super_bloom_twist.final.svg" width="180" alt="Super Bloom Twist" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/stripebands_radial_bloom.final.svg" width="180" alt="Stripebands Radial Bloom" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/quasicrystal_bloom.final.svg" width="180" alt="Quasicrystal Bloom" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/star_lattice_bands_clip.final.svg" width="180" alt="Star Lattice Bands Clip" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/hilbert_double_warp.final.svg" width="180" alt="Hilbert Double Warp" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/rosette_weave_knot.final.svg" width="180" alt="Rosette Weave Knot" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/mdi_pattern_grid.final.svg" width="180" alt="MDI Pattern Grid" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/pixel_mosaic_rosette_clip.final.svg" width="180" alt="Pixel Mosaic Rosette" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/lorenz_butterfly.final.svg" width="180" alt="Lorenz Butterfly" />
+  <img src="https://raw.githubusercontent.com/neilyboy/plotterlab/main/public/thumbs/dragon_curve_cmyk.final.svg" width="180" alt="Dragon Curve CMYK" />
 </p>
+
+See the full auto-generated gallery here: [docs/gallery.md](docs/gallery.md)
 
 ## 🚀 Quick Start (Docker Compose)
 
