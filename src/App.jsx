@@ -443,6 +443,7 @@ export default function App() {
   const loadExample = async (file) => {
     if (!file) return
     try {
+      showToast('Loading example...')
       const res = await fetch(`/presets/${file}`)
       const data = await res.json()
       if (data.doc) setDoc(d => ({ ...d, ...data.doc }))
@@ -568,7 +569,7 @@ export default function App() {
 
   // Layer action handlers
   const addLayer = () => { setLayers(ls => [...ls, newLayer(ls.length)]); showToast('Layer added') }
-  const removeLayer = (id) => setLayers(ls => ls.filter(l => l.id !== id))
+  const removeLayer = (id) => { setLayers(ls => ls.filter(l => l.id !== id)); showToast('Layer removed') }
   const toggleVisible = (id) => setLayers(ls => ls.map(l => l.id === id ? { ...l, visible: !l.visible } : l))
   const moveLayer = (id, dir) => setLayers(ls => {
     const idx = ls.findIndex(l => l.id === id)
@@ -1206,6 +1207,7 @@ export default function App() {
     setSaveMessage('Preparing SVGs...')
     setIsSaving(true)
     setSaveProgress(0)
+    showToast('Preparing SVGs...')
     setTimeout(async () => {
       try {
         const zip = new JSZip()
@@ -1238,6 +1240,7 @@ export default function App() {
   const exportPreset = () => {
     setSaveMessage('Saving preset...');
     setIsSaving(true);
+    showToast('Saving preset...')
     try {
       const preset = { doc, layers }
       const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' })
@@ -1259,6 +1262,7 @@ export default function App() {
     const f = e.target.files?.[0]
     if (!f) return
     try {
+      showToast('Loading preset...')
       const text = await f.text()
       const data = JSON.parse(text)
       if (data.doc) setDoc(d => ({ ...d, ...data.doc }))
